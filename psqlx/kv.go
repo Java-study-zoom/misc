@@ -96,12 +96,19 @@ func (b *KV) Emplace(key string, v interface{}) error {
 	return err
 }
 
-// Set updates a value of the particular key.
-func (b *KV) Set(key string, v interface{}) error {
-	bs, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
+// Append appens the value to the existing value of a particular key.
+// Creates the key if not exist.
+func (b *KV) AppendBytes(key string, bs []byte) error {
+	q := fmt.Sprintf(`
+		insert into %s (k, v) values ($1, $2)
+		on conflict (k) do update set v = v || excluded.v
+	`, b.table)
+	_, err := b.db.X(q, keyHash(key), bs)
+	return err
+}
+
+// SetBytes updates the value bytes of a particular key.
+func (b *KV) SetBytes(key string, bs []byte) error {
 	q := fmt.Sprintf(`update %s set v=$1 where k=$2`, b.table)
 	res, err := b.db.X(q, bs, keyHash(key))
 	if err != nil {
@@ -119,6 +126,15 @@ func (b *KV) Set(key string, v interface{}) error {
 		return errors.New("multiple value got updated")
 	}
 	return nil
+}
+
+// Set updates the JSON value of a particular key.
+func (b *KV) Set(key string, v interface{}) error {
+	bs, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return b.SetBytes(key, bs)
 }
 
 // ErrCancel cancels the operation.
