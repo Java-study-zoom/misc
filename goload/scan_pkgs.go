@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"shanhu.io/misc/strutil"
 )
 
 func isNoGoError(e error) bool {
@@ -27,10 +25,24 @@ func MakeContext(gopath string) *build.Context {
 	return &ctx
 }
 
-// ScanOptions provides the options for scanning a
-// Go language repository.
+// ScanOptions provides the options for scanning a Go language repository.
 type ScanOptions struct {
 	Context *build.Context
+
+	// TestdataWhiteList provides a whitelist of "testdata" packages that are
+	// valid ones and being imported.
+	TestdataWhiteList map[string]bool
+
+	// PkgBlackList is a list of packages that will be skipped.  It will also
+	// skip its sub packages.
+	PkgBlackList map[string]bool
+}
+
+func inSet(s map[string]bool, k string) bool {
+	if s == nil {
+		return false
+	}
+	return s[k]
 }
 
 type scanner struct {
@@ -58,14 +70,6 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	return ret
 }
 
-// some (bad) repos use testdata folder to save code and import them.
-var testdataWhiteList = func() map[string]bool {
-	return strutil.MakeSet([]string{
-		"github.com/golang/protobuf/proto/testdata",
-		"google.golang.org/grpc/testdata",
-	})
-}()
-
 // ScanPkgs scans all packages under a package path.
 func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 	s := newScanner(p, opts)
@@ -89,6 +93,10 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 		if e != nil {
 			return e
 		}
+		if inSet(opts.PkgBlackList, path) {
+			return filepath.SkipDir
+		}
+
 		base := filepath.Base(path)
 
 		if strings.HasPrefix(base, "_") || strings.HasPrefix(base, ".") {
@@ -97,7 +105,7 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 
 		switch base {
 		case "testdata":
-			if testdataWhiteList[path] {
+			if inSet(opts.TestdataWhiteList, path) {
 				break
 			}
 			return filepath.SkipDir
