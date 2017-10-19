@@ -124,6 +124,10 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 			return err
 		}
 
+		if len(pkg.GoFiles) == 0 && len(pkg.CgoFiles) == 0 {
+			return nil
+		}
+
 		ret.Pkgs[path] = newPkg(path, pkg.Imports)
 		return nil
 	}
