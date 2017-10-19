@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"shanhu.io/misc/strutil"
 )
 
 func isNoGoError(e error) bool {
@@ -56,6 +58,14 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	return ret
 }
 
+// some (bad) repos use testdata folder to save code and import them.
+var testdataWhiteList = func() map[string]bool {
+	return strutil.MakeSet([]string{
+		"github.com/golang/protobuf/proto/testdata",
+		"google.golang.org/grpc/testdata",
+	})
+}()
+
 // ScanPkgs scans all packages under a package path.
 func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 	s := newScanner(p, opts)
@@ -87,6 +97,9 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 
 		switch base {
 		case "testdata":
+			if testdataWhiteList[path] {
+				break
+			}
 			return filepath.SkipDir
 		case "vendor":
 			ret.HasVendor = true
