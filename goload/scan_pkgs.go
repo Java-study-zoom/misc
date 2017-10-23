@@ -93,7 +93,7 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 		if e != nil {
 			return e
 		}
-		if inSet(opts.PkgBlackList, path) {
+		if inSet(s.opts.PkgBlackList, path) {
 			return filepath.SkipDir
 		}
 
@@ -105,7 +105,7 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 
 		switch base {
 		case "testdata":
-			if inSet(opts.TestdataWhiteList, path) {
+			if inSet(s.opts.TestdataWhiteList, path) {
 				break
 			}
 			return filepath.SkipDir
