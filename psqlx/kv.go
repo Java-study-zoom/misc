@@ -76,10 +76,7 @@ func (b *KV) Get(key string, v interface{}) error {
 		return pathutil.NotExist(key)
 	}
 
-	if err := json.Unmarshal(bs, v); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(bs, v)
 }
 
 // Emplace sets the value for a particular key. Creates the key if not exist.
@@ -96,7 +93,7 @@ func (b *KV) Emplace(key string, v interface{}) error {
 	return err
 }
 
-// Append appens the value to the existing value of a particular key.
+// AppendBytes appends the value to the existing value of a particular key.
 // Creates the key if not exist.
 func (b *KV) AppendBytes(key string, bs []byte) error {
 	q := fmt.Sprintf(`
