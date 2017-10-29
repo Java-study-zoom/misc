@@ -241,7 +241,7 @@ func (b *KV) Mutate(
 	return tx.Commit()
 }
 
-func iterRows(rows *sql.Rows, it Iter) error {
+func iterRows(rows *sql.Rows, it *Iter) error {
 	for rows.Next() {
 		var bs []byte
 		if err := rows.Scan(&bs); err != nil {
@@ -261,7 +261,7 @@ func iterRows(rows *sql.Rows, it Iter) error {
 }
 
 // Walk iterates through all items in the key value store.
-func (b *KV) Walk(it Iter) error {
+func (b *KV) Walk(it *Iter) error {
 	q := fmt.Sprintf(`select k, v from %s order by k`, b.table)
 	rows, err := b.db.Q(q)
 	if err != nil {
@@ -273,7 +273,7 @@ func (b *KV) Walk(it Iter) error {
 }
 
 // WalkPartial walks thorugh the items at offset with at most n items.
-func (b *KV) WalkPartial(offset, n uint64, desc bool, it Iter) error {
+func (b *KV) WalkPartial(offset, n uint64, desc bool, it *Iter) error {
 	if b.hashed {
 		return fmt.Errorf("cannot partial walk over a hashed table")
 	}
