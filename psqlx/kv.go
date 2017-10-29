@@ -10,16 +10,6 @@ import (
 	"shanhu.io/misc/sqlx"
 )
 
-// InitKV creates a key value pair
-func InitKV(db *sqlx.DB, table string) error {
-	q := fmt.Sprintf(`create table %s (
-		k varchar(%d) primary key not null,
-		v bytea not null
-	)`, table, MaxKeyLen)
-	_, err := db.X(q)
-	return err
-}
-
 // KV defines a key value pair table.
 type KV struct {
 	db     *sqlx.DB
@@ -241,10 +231,11 @@ func (b *KV) Mutate(
 	return tx.Commit()
 }
 
-func iterRows(rows *sql.Rows, it *Iter) error {
+func (b *KV) iterRows(rows *sql.Rows, it *Iter) error {
 	for rows.Next() {
+		var k string
 		var bs []byte
-		if err := rows.Scan(&bs); err != nil {
+		if err := rows.Scan(&k, &bs); err != nil {
 			return err
 		}
 
@@ -252,7 +243,10 @@ func iterRows(rows *sql.Rows, it *Iter) error {
 		if err := json.Unmarshal(bs, entry); err != nil {
 			return err
 		}
-		if err := it.Do(entry); err != nil {
+		if b.hashed {
+			k = ""
+		}
+		if err := it.Do(k, entry); err != nil {
 			return err
 		}
 	}
@@ -269,7 +263,7 @@ func (b *KV) Walk(it *Iter) error {
 	}
 	defer rows.Close()
 
-	return iterRows(rows, it)
+	return b.iterRows(rows, it)
 }
 
 // WalkPartial walks thorugh the items at offset with at most n items.
@@ -277,17 +271,21 @@ func (b *KV) WalkPartial(offset, n uint64, desc bool, it *Iter) error {
 	if b.hashed {
 		return fmt.Errorf("cannot partial walk over a hashed table")
 	}
-	q := fmt.Sprintf(
-		`select k, v from %s order by k offset ? limit ?`, b.table,
-	)
+
+	order := "acs"
 	if desc {
-		q += " desc"
+		order = "desc"
 	}
-	rows, err := b.db.Q(q, offset, n)
+
+	q := fmt.Sprintf(
+		`select k, v from %s order by k %s limit %d offset %d`,
+		b.table, order, n, offset,
+	)
+	rows, err := b.db.Q(q)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	return iterRows(rows, it)
+	return b.iterRows(rows, it)
 }

@@ -4,7 +4,7 @@ package psqlx
 type Maker func() interface{}
 
 // Doer is a functions that performs the a particular task.
-type Doer func(v interface{}) error
+type Doer func(k string, v interface{}) error
 
 // Iter is an interator.
 type Iter struct {
