@@ -6,17 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"shanhu.io/misc/hashutil"
 	"shanhu.io/misc/pathutil"
 	"shanhu.io/misc/sqlx"
 )
-
-func keyHash(k string) string {
-	return hashutil.HashStr(k)
-}
-
-// MaxKeyLen is the maximum length of a hashed KV.
-const MaxKeyLen = 255
 
 // InitKV creates a key value pair
 func InitKV(db *sqlx.DB, table string) error {
@@ -94,21 +86,29 @@ func (b *KV) Remove(key string) error {
 	return nil
 }
 
-// Get gets the value and json marshals it into v.
-func (b *KV) Get(key string, v interface{}) error {
+// GetBytes gets the value bytes for the specific key.
+func (b *KV) GetBytes(key string) ([]byte, error) {
 	mk, err := b.mapKey(key)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	q := fmt.Sprintf(`select v from %s where k=$1`, b.table)
 	row := b.db.Q1(q, mk)
 	var bs []byte
 	if has, err := row.Scan(&bs); err != nil {
-		return err
+		return nil, err
 	} else if !has {
-		return pathutil.NotExist(key)
+		return nil, pathutil.NotExist(key)
 	}
+	return bs, nil
+}
 
+// Get gets the value and json marshals it into v.
+func (b *KV) Get(key string, v interface{}) error {
+	bs, err := b.GetBytes(key)
+	if err != nil {
+		return err
+	}
 	return json.Unmarshal(bs, v)
 }
 
@@ -281,7 +281,7 @@ func (b *KV) WalkPartial(offset, n uint64, desc bool, it Iter) error {
 		`select k, v from %s order by k offset ? limit ?`, b.table,
 	)
 	if desc {
-		q = q + " desc"
+		q += " desc"
 	}
 	rows, err := b.db.Q(q, offset, n)
 	if err != nil {
