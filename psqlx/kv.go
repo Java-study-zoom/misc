@@ -129,8 +129,8 @@ func (b *KV) AppendBytes(key string, bs []byte) error {
 	}
 	q := fmt.Sprintf(`
 		insert into %s (k, v) values ($1, $2)
-		on conflict (k) do update set v = v || excluded.v
-	`, b.table)
+		on conflict (k) do update set v = %s.v || excluded.v
+	`, b.table, b.table)
 	_, err = b.db.X(q, mk, bs)
 	return err
 }
