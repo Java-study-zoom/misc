@@ -19,7 +19,7 @@ func Write(file string, obj interface{}) error {
 // a file.
 func WriteReadable(f string, v interface{}) error {
 	buf := new(bytes.Buffer)
-	bs, err := Format(v)
+	bs, err := json.MarshalIndent(v, "", "    ")
 	if err != nil {
 		return err
 	}
@@ -27,9 +27,4 @@ func WriteReadable(f string, v interface{}) error {
 	buf.Write([]byte("\n"))
 
 	return ioutil.WriteFile(f, bs, 0644)
-}
-
-// Format marshals a JSON objejct with indents.
-func Format(v interface{}) ([]byte, error) {
-	return json.MarshalIndent(v, "", "    ")
 }
