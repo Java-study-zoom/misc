@@ -1,83 +1,65 @@
-package gerror
+package errcode
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Error is a generic type of error
 type Error struct {
-	code string // code is the type of the error.
-	err  error  // err is the error message, human friendly.
-
+	Code  string // code is the type of the error.
+	error        // err is the error message, human friendly.
 }
 
-func codeErrorf(code string, msg string, args ...interface{}) *Error {
-	err := fmt.Errorf(msg, args...)
+// Error codes
+const (
+	NotFound     = "not-found"
+	InvalidArg   = "invalid-arg"
+	Internal     = "internal"
+	Unauthorized = "unauthorized"
+)
+
+// Add create a new error with an error code added to it.
+func Add(code string, err error) *Error {
 	return &Error{
-		code: code,
-		err:  err,
+		Code:  code,
+		error: err,
 	}
 }
 
-// AltError replace the message of a Gerror, keep code the same.
-func AltError(e *Error, msg string, args ...interface{}) *Error {
-	return codeErrorf(e.code, msg, args...)
-}
-
-// NotFound returned a not found error.
-func NotFound(msg string) *Error {
-	return codeErrorf("not-found", "Not Found: %s", msg)
-}
-
-// Invalid returned an error of invalid argument.
-func Invalid(msg string) *Error {
-	return codeErrorf("invalid", "Invalid argument: %s", msg)
-
-}
-
-// Internal returned an internal error.
-func Internal(msg string) *Error {
-	return codeErrorf("interal", "Internal error: %s", msg)
-}
-
-// Unauthorized returned an error caused by unauthrozied request.
-func Unauthorized(msg string) *Error {
-	return codeErrorf("unauthrozied", "Unauthorized: %s", msg)
-}
-
-// Temperary returned an temperory error
-func Temperary(msg string) *Error {
-	return codeErrorf("temperary", "Temperary Unavailable: %s", msg)
-}
-
-// Other returned an errors is not defined.
-func Other(msg string) *Error {
-	return codeErrorf("other", "Other errors: %s", msg)
-}
-
-// GetError convert an error into a GError.
-func GetError(err error) *Error {
-	gErr, ok := err.(*Error)
-	if ok {
-		return gErr
+// Of return the code of a error if it is coded, otherwise return ""
+func Of(err error) string {
+	if codedErr, ok := err.(*Error); ok {
+		return codedErr.Code
 	}
-	msg := err.Error()
-	errType := strings.SplitN(msg, ":", 2)[0]
-	switch errType {
-	case "Not Found":
-		return NotFound(msg)
-	case "Invalid argument":
-		return Invalid(msg)
-	case "Internal error":
-		return Internal(msg)
-	case "Unauthorized":
-		return Unauthorized(msg)
-	default:
-		return Other(msg)
-	}
+	return ""
 }
 
-func (e *Error) Error() string {
-	return e.err.Error()
+// Errorf create an Error with a code.
+func Errorf(code string, f string, args ...interface{}) *Error {
+	return Add(code, fmt.Errorf(f, args...))
+}
+
+// AltErrorf replace the message of an Error, keep code the same.
+func AltErrorf(e *Error, msg string, args ...interface{}) *Error {
+	return Errorf(e.Code, msg, args...)
+}
+
+// NotFoundf returns a not-found error.
+func NotFoundf(f string, args ...interface{}) *Error {
+	return Errorf(NotFound, f, args...)
+}
+
+// InvalidArgf returns an error caused by invalid argument.
+func InvalidArgf(f string, args ...interface{}) *Error {
+	return Errorf(InvalidArg, f, args...)
+}
+
+// Internalf returns an internal error.
+func Internalf(f string, args ...interface{}) *Error {
+	return Errorf(Internal, f, args...)
+}
+
+// Unauthorizedf returns an error caused by unauthrozied request.
+func Unauthorizedf(f string, args ...interface{}) *Error {
+	return Errorf(Unauthorized, f, args...)
 }
