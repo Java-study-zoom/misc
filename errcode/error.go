@@ -26,7 +26,8 @@ func Add(code string, err error) *Error {
 	}
 }
 
-// Of returns the code of a error if it is coded, otherwise returns ""
+// Of returns the code of a error if it is coded,
+// otherwise returns an empty string
 func Of(err error) string {
 	if codedErr, ok := err.(*Error); ok {
 		return codedErr.Code
