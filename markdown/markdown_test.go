@@ -22,6 +22,8 @@ func TestToHTML(t *testing.T) {
 		in, out, title string
 	}{
 		{"", "", ""},
+		{"# Hello", "", "Hello"},
+		{"# Hello\nContent.\n", "<p>Content.</p>\n", "Hello"},
 	} {
 		title, out := ToHTMLWithTitle([]byte(d.in))
 		if string(out) != d.out || title != d.title {
