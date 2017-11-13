@@ -23,7 +23,7 @@ func InitKV(db *sqlx.DB, table string) error {
 // KVAddClassColumn adds a class column for the KV table.
 func KVAddClassColumn(db *sqlx.DB, table string) error {
 	q := fmt.Sprintf(
-		`alter table %s add column c varchar(%d) not null`,
+		`alter table %s add column c varchar(%d) not null default ''`,
 		table, MaxClassLen,
 	)
 	_, err := db.X(q)
