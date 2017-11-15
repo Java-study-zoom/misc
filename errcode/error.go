@@ -18,7 +18,7 @@ const (
 	Unauthorized = "unauthorized"
 )
 
-// Add create a new error with an error code added to it.
+// Add creates a new error with an error code added to it.
 func Add(code string, err error) *Error {
 	return &Error{
 		Code:  code,
@@ -26,7 +26,8 @@ func Add(code string, err error) *Error {
 	}
 }
 
-// Of return the code of a error if it is coded, otherwise return ""
+// Of returns the code of a error if it is coded,
+// otherwise returns an empty string
 func Of(err error) string {
 	if codedErr, ok := err.(*Error); ok {
 		return codedErr.Code
@@ -34,12 +35,32 @@ func Of(err error) string {
 	return ""
 }
 
-// Errorf create an Error with a code.
+// IsNotFound returns weahter the error has the Code of errcode
+func IsNotFound(err error) bool {
+	return Of(err) == NotFound
+}
+
+// IsInvalidArg returns weahter the error has the Code of InvalidArg
+func IsInvalidArg(err error) bool {
+	return Of(err) == InvalidArg
+}
+
+// IsInternal returns weahter the error has the Code of Internal
+func IsInternal(err error) bool {
+	return Of(err) == Internal
+}
+
+// IsUnauthorized returns weahter the error has the Code of Unauthorized
+func IsUnauthorized(err error) bool {
+	return Of(err) == Unauthorized
+}
+
+// Errorf creates an Error with a code.
 func Errorf(code string, f string, args ...interface{}) *Error {
 	return Add(code, fmt.Errorf(f, args...))
 }
 
-// AltErrorf replace the message of an Error, keep code the same.
+// AltErrorf replaces the message of an Error, keep code the same.
 func AltErrorf(e *Error, msg string, args ...interface{}) *Error {
 	return Errorf(e.Code, msg, args...)
 }
