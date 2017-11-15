@@ -4,13 +4,13 @@ import (
 	"fmt"
 )
 
-// Error is a generic type of error
+// Error is a generic error with a string error code.
 type Error struct {
 	Code  string // code is the type of the error.
 	error        // err is the error message, human friendly.
 }
 
-// Error codes
+// Common general error codes
 const (
 	NotFound     = "not-found"
 	InvalidArg   = "invalid-arg"
@@ -18,7 +18,7 @@ const (
 	Unauthorized = "unauthorized"
 )
 
-// Add creates a new error with an error code added to it.
+// Add creates a new error with code as the error code.
 func Add(code string, err error) *Error {
 	return &Error{
 		Code:  code,
@@ -26,8 +26,8 @@ func Add(code string, err error) *Error {
 	}
 }
 
-// Of returns the code of a error if it is coded,
-// otherwise returns an empty string
+// Of returns the code of the error. For errors that
+// do not have a code, it returns empty string.
 func Of(err error) string {
 	if codedErr, ok := err.(*Error); ok {
 		return codedErr.Code
@@ -35,47 +35,47 @@ func Of(err error) string {
 	return ""
 }
 
-// IsNotFound returns weahter the error has the Code of errcode
+// IsNotFound checks if it is a not-found error.
 func IsNotFound(err error) bool {
 	return Of(err) == NotFound
 }
 
-// IsInvalidArg returns weahter the error has the Code of InvalidArg
+// IsInvalidArg checks if it is an invalid argument error.
 func IsInvalidArg(err error) bool {
 	return Of(err) == InvalidArg
 }
 
-// IsInternal returns weahter the error has the Code of Internal
+// IsInternal checks if it is an internal error.
 func IsInternal(err error) bool {
 	return Of(err) == Internal
 }
 
-// IsUnauthorized returns weahter the error has the Code of Unauthorized
+// IsUnauthorized checks if it is an unauthorized error.
 func IsUnauthorized(err error) bool {
 	return Of(err) == Unauthorized
 }
 
-// Errorf creates an Error with a code.
+// Errorf creates an Error with the given error code.
 func Errorf(code string, f string, args ...interface{}) *Error {
 	return Add(code, fmt.Errorf(f, args...))
 }
 
-// AltErrorf replaces the message of an Error, keep code the same.
+// AltErrorf replaces the message of e, but keeps the error code.
 func AltErrorf(e *Error, msg string, args ...interface{}) *Error {
 	return Errorf(e.Code, msg, args...)
 }
 
-// NotFoundf returns a not-found error.
+// NotFoundf creates a new not-found error.
 func NotFoundf(f string, args ...interface{}) *Error {
 	return Errorf(NotFound, f, args...)
 }
 
-// InvalidArgf returns an error caused by invalid argument.
+// InvalidArgf creates a new invalid arugment error.
 func InvalidArgf(f string, args ...interface{}) *Error {
 	return Errorf(InvalidArg, f, args...)
 }
 
-// Internalf returns an internal error.
+// Internalf creates a new internal error.
 func Internalf(f string, args ...interface{}) *Error {
 	return Errorf(Internal, f, args...)
 }
