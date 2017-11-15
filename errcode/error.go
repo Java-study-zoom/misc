@@ -61,8 +61,13 @@ func Errorf(code string, f string, args ...interface{}) *Error {
 }
 
 // AltErrorf replaces the message of e, but keeps the error code.
-func AltErrorf(e *Error, msg string, args ...interface{}) *Error {
-	return Errorf(e.Code, msg, args...)
+func AltErrorf(err error, msg string, args ...interface{}) error {
+	cerr, ok := err.(*Error)
+	if !ok {
+		return fmt.Errorf(msg, args...)
+	}
+
+	return Errorf(cerr.Code, msg, args...)
 }
 
 // NotFoundf creates a new not-found error.
