@@ -20,7 +20,7 @@ func String(t, now time.Time) string {
 	}
 
 	secs := int64(d / time.Second)
-	if secs <= 60 {
+	if secs < 60 {
 		return "just now"
 	}
 

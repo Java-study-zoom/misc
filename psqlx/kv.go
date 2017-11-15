@@ -1,7 +1,6 @@
 package psqlx
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,19 +26,12 @@ func NewOrderedKV(db *sqlx.DB, table string) *KV {
 	return &KV{db: db, table: table, hashed: false}
 }
 
-func (b *KV) mapKey(key string) (string, error) {
-	if b.hashed {
-		return keyHash(key), nil
-	}
-	if len(key) > MaxKeyLen {
-		return "", fmt.Errorf("key %q too long", key)
-	}
-	return key, nil
+func (b *KV) mapKey(k string) (string, error) {
+	return kvMapKey(k, b.hashed)
 }
 
-// Add adds an entry with the given key and value. The value
-// will be marshalled with JSON encoding.
-func (b *KV) Add(key string, v interface{}) error {
+// AddClass adds an entry with a particular class.
+func (b *KV) AddClass(key, cls string, v interface{}) error {
 	bs, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -48,9 +40,29 @@ func (b *KV) Add(key string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	q := fmt.Sprintf(`insert into %s (k, v) values ($1, $2)`, b.table)
-	_, err = b.db.X(q, mk, bs)
+	q := fmt.Sprintf(`insert into %s (k, c, v) values ($1, $2, $3)`, b.table)
+	_, err = b.db.X(q, mk, cls, bs)
 	return err
+}
+
+// SetClass sets an entry's class.
+func (b *KV) SetClass(key, cls string) error {
+	mk, err := b.mapKey(key)
+	if err != nil {
+		return err
+	}
+	q := fmt.Sprintf(`update %s set c=$1 where k=$2`, b.table)
+	res, err := b.db.X(q, cls, mk)
+	if err != nil {
+		return err
+	}
+	return kvResError(res, key)
+}
+
+// Add adds an entry with the given key and value. The value
+// will be marshalled with JSON encoding.
+func (b *KV) Add(key string, v interface{}) error {
+	return b.AddClass(key, "", v)
 }
 
 // Remove removes the entry with the specific key.
@@ -66,14 +78,7 @@ func (b *KV) Remove(key string) error {
 		return err
 	}
 
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return pathutil.NotExist(key)
-	}
-	return nil
+	return kvResError(res, key)
 }
 
 // GetBytes gets the value bytes for the specific key.
@@ -147,17 +152,7 @@ func (b *KV) SetBytes(key string, bs []byte) error {
 		return err
 	}
 
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return pathutil.NotExist(key)
-	}
-	if n != 1 {
-		return errors.New("multiple value got updated")
-	}
-	return nil
+	return kvResError(res, key)
 }
 
 // Set updates the JSON value of a particular key.
@@ -200,11 +195,9 @@ func (b *KV) Mutate(
 		return err
 	}
 
-	err = f(v)
-	if err == ErrCancel {
+	if err := f(v); err == ErrCancel {
 		return nil
-	}
-	if err != nil {
+	} else if err != nil {
 		return err
 	}
 
@@ -218,40 +211,14 @@ func (b *KV) Mutate(
 	if err != nil {
 		return err
 	}
-	n, err := res.RowsAffected()
-	if err != nil {
+	if n, err := res.RowsAffected(); err != nil {
 		return err
-	}
-	if n == 0 {
+	} else if n == 0 {
 		return fmt.Errorf("nothing updated")
-	}
-	if n != 1 {
+	} else if n != 1 {
 		return fmt.Errorf("%d updated", n)
 	}
 	return tx.Commit()
-}
-
-func (b *KV) iterRows(rows *sql.Rows, it *Iter) error {
-	for rows.Next() {
-		var k string
-		var bs []byte
-		if err := rows.Scan(&k, &bs); err != nil {
-			return err
-		}
-
-		entry := it.Make()
-		if err := json.Unmarshal(bs, entry); err != nil {
-			return err
-		}
-		if b.hashed {
-			k = ""
-		}
-		if err := it.Do(k, entry); err != nil {
-			return err
-		}
-	}
-
-	return rows.Close()
 }
 
 // Walk iterates through all items in the key value store.
@@ -262,30 +229,45 @@ func (b *KV) Walk(it *Iter) error {
 		return err
 	}
 	defer rows.Close()
-
-	return b.iterRows(rows, it)
+	return kvIterRows(rows, it, b.hashed)
 }
 
-// WalkPartial walks thorugh the items at offset with at most n items.
-func (b *KV) WalkPartial(offset, n uint64, desc bool, it *Iter) error {
+var errHashedHasNoPartial = fmt.Errorf(
+	"cannot partial walk over a hashed table",
+)
+
+// WalkPartial walks through the some part of the resulting items.
+func (b *KV) WalkPartial(p *KVPartial, it *Iter) error {
 	if b.hashed {
-		return fmt.Errorf("cannot partial walk over a hashed table")
+		return errHashedHasNoPartial
 	}
-
-	order := "acs"
-	if desc {
-		order = "desc"
-	}
-
 	q := fmt.Sprintf(
 		`select k, v from %s order by k %s limit %d offset %d`,
-		b.table, order, n, offset,
+		b.table, orderStr(p.Desc), p.N, p.Offset,
 	)
 	rows, err := b.db.Q(q)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
+	return kvIterRows(rows, it, b.hashed)
+}
 
-	return b.iterRows(rows, it)
+// WalkPartialClass walks through the some part of the items that
+// of a given class.
+func (b *KV) WalkPartialClass(cls string, p *KVPartial, it *Iter) error {
+	if b.hashed {
+		return errHashedHasNoPartial
+	}
+	q := fmt.Sprintf(
+		`select k, v from %s where c=$1
+		order by k %s limit %d offset %d`,
+		b.table, orderStr(p.Desc), p.N, p.Offset,
+	)
+	rows, err := b.db.Q(q, cls)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return kvIterRows(rows, it, b.hashed)
 }
