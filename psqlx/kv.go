@@ -107,8 +107,27 @@ func (b *KV) Get(key string, v interface{}) error {
 	return json.Unmarshal(bs, v)
 }
 
-// Emplace sets the value for a particular key. Creates the key if not exist.
+// Emplace sets the value for a particular key. Does nothing if the key does
+// not exist.
 func (b *KV) Emplace(key string, v interface{}) error {
+	mk, err := b.mapKey(key)
+	if err != nil {
+		return err
+	}
+	bs, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	q := fmt.Sprintf(`
+        insert into %s (k, v) values ($1, $2)
+        on conflict (k) do nothing
+    `, b.table)
+	_, err = b.db.X(q, mk, bs)
+	return err
+}
+
+// Replace sets the value for a particular key. Creates the key if not exist.
+func (b *KV) Replace(key string, v interface{}) error {
 	mk, err := b.mapKey(key)
 	if err != nil {
 		return err
