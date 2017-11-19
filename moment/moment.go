@@ -40,7 +40,7 @@ func String(t, now time.Time) string {
 	if hours <= 1 {
 		return "an hour ago"
 	}
-	if hours < 24 {
+	if hours <= 12 || t.Day() == now.Day() {
 		return fmt.Sprintf("%d hours ago", hours)
 	}
 
