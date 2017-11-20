@@ -41,18 +41,39 @@ func TestString(t *testing.T) {
 		hour int
 		want string
 	}{
-		{10, "13 hours ago"},
-		{1, "13 hours ago"},
-		{23, "yesterday"},
+		{23, "13 hours ago"},
+		{14, "13 hours ago"},
+		{1, "yesterday"},
 		{12, "yesterday"},
 	} {
 		dummyTime := time.Date(1, 1, 1, test.hour, 0, 0, 0, time.UTC)
 		dur := 13 * time.Hour
-		got := String(dummyTime, dummyTime.Add(dur))
+		got := String(dummyTime.Add(-dur), dummyTime)
 		if got != test.want {
 			t.Errorf(
 				"moment string for 13 hours afer %q: got %q, want %q",
 				dummyTime, got, test.want,
+			)
+		}
+	}
+	for _, test := range []struct {
+		hour int
+		want string
+	}{
+		{23, "13 hours ago"},
+		{14, "13 hours ago"},
+		{1, "yesterday"},
+		{12, "yesterday"},
+	} {
+		loc, _ := time.LoadLocation("America/New_York")
+		UTCTime := time.Date(1, 1, 1, test.hour, 0, 0, 0, time.UTC)
+		dur := 13 * time.Hour
+		NYTime := UTCTime.Add(-dur).In(loc)
+		got := String(NYTime, UTCTime)
+		if got != test.want {
+			t.Errorf(
+				"moment string for 13 hours afer %q, %q: got %q, want %q",
+				UTCTime, NYTime.In(time.UTC), got, test.want,
 			)
 		}
 	}
