@@ -2,8 +2,22 @@ package idutil
 
 // Short returns the first 7 bytes of a string.
 func Short(id string) string {
-	if len(id) > 7 {
-		return id[:7]
+	n := len(id)
+	for i, r := range id {
+		if r >= 'a' && r <= 'z' {
+			continue
+		}
+		if r >= 'A' && r <= 'Z' {
+			continue
+		}
+		if r >= '0' && r <= '9' {
+			continue
+		}
+		n = i
+		break
 	}
-	return id
+	if n > 7 {
+		n = 7
+	}
+	return id[:n]
 }
