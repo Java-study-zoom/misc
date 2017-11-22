@@ -20,7 +20,7 @@ func TestShortId(t *testing.T) {
 		got := Short(test.id)
 		if got != test.want {
 			t.Errorf(
-				"Short id string for %q: got %q, want %q",
+				"Short id string for %s: got %q, want %q",
 				test.id, got, test.want,
 			)
 		}

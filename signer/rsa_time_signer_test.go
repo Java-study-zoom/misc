@@ -8,7 +8,11 @@ import (
 	"crypto/rsa"
 )
 
+<<<<<<< HEAD
 func TestRSATimeSigner(t *testing.T) {
+=======
+func TestRsaTimeSigner(t *testing.T) {
+>>>>>>> a25c218d5ef15982ce5d4a9d432319df4fe1374d
 	size := 1024
 	key, err := rsa.GenerateKey(rand.Reader, size)
 	if err != nil {
