@@ -6,13 +6,13 @@ import (
 )
 
 // ForNow returns a human friendly string for describing a time point
-// t relative to now. It reads the system's current time.
+// t relative to current time. It reads the system's current time.
 func ForNow(t time.Time) string {
 	return String(t, time.Now())
 }
 
 // String returns a human friendly string for describing a time point t
-// relative to now.
+// relative to `now`. The time zone will be sync to timezone in `now` first.
 func String(t, now time.Time) string {
 	localT := t.In(now.Location())
 	d := now.Sub(localT)
