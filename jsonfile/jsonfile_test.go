@@ -8,9 +8,9 @@ import (
 )
 
 type testSturct struct {
-	Number int
+	Number  int
 	Boolean bool
-	Text string
+	Text    string
 }
 
 var testWriteData = &testSturct{
