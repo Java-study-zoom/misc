@@ -12,7 +12,8 @@ func ForNow(t time.Time) string {
 }
 
 // String returns a human friendly string for describing a time point t
-// relative to `now`. The time zone will be sync to timezone in `now` first.
+// relative to current time.
+// The time zone will be sync to the timezone used in current time.
 func String(t, now time.Time) string {
 	localT := t.In(now.Location())
 	d := now.Sub(localT)
