@@ -5,18 +5,18 @@ import (
 	"time"
 )
 
-// ForNow returns a human friendly string for describing a time point
-// t relative to current time. It reads the system's current time.
+// ForNow returns a human friendly string for describing a time point t
+// relative to the current time.
 func ForNow(t time.Time) string {
 	return String(t, time.Now())
 }
 
 // String returns a human friendly string for describing a time point t
-// relative to current time.
-// The time zone will be sync to the timezone used in current time.
+// relative to the time point of now. When calculating time differences, it
+// uses the time zone of the time point of now.
 func String(t, now time.Time) string {
-	localT := t.In(now.Location())
-	d := now.Sub(localT)
+	t = t.In(now.Location())
+	d := now.Sub(t)
 	if d < 0 {
 		return "in the future"
 	}
@@ -42,7 +42,7 @@ func String(t, now time.Time) string {
 	if hours <= 1 {
 		return "an hour ago"
 	}
-	if hours <= 12 || localT.Day() == now.Day() {
+	if hours <= 12 || t.Day() == now.Day() {
 		return fmt.Sprintf("%d hours ago", hours)
 	}
 
