@@ -56,7 +56,7 @@ func IsUnauthorized(err error) bool {
 	return Of(err) == Unauthorized
 }
 
-// IsTimeOut checks if it is an time-out error.
+// IsTimeOut checks if it is a time-out error.
 func IsTimeOut(err error) bool {
 	return Of(err) == TimeOut
 }
@@ -72,7 +72,6 @@ func AltErrorf(err error, msg string, args ...interface{}) error {
 	if !ok {
 		return fmt.Errorf(msg, args...)
 	}
-
 	return Errorf(cerr.Code, msg, args...)
 }
 
@@ -91,12 +90,12 @@ func Internalf(f string, args ...interface{}) *Error {
 	return Errorf(Internal, f, args...)
 }
 
-// Unauthorizedf returns an error caused by unauthrozied request.
+// Unauthorizedf returns an error caused by an unauthrozied request.
 func Unauthorizedf(f string, args ...interface{}) *Error {
 	return Errorf(Unauthorized, f, args...)
 }
 
-// TimeOutf returns an error caused by time-out request.
+// TimeOutf returns a new time-out error.
 func TimeOutf(f string, args ...interface{}) *Error {
 	return Errorf(TimeOut, f, args...)
 }
