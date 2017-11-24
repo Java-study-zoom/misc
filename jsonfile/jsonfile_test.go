@@ -7,82 +7,107 @@ import (
 	"testing"
 )
 
-func TestJsonRead(t *testing.T) {
-	filename := "testdata/rumpelstilzchen"
+type testSturct struct {
+	Number int
+	Boolean bool
+	Text string
+}
+
+var testWriteData = &testSturct{
+	Text: "be stronger",
+}
+
+const testWriteReadable = `{
+    "Number": 0,
+    "Boolean": false,
+    "Text": "be stronger"
+}`
+
+func TestReadNotExist(t *testing.T) {
+	const filename = "testdata/rumpelstilzchen"
 	obj := &struct{}{}
-	err := Read(filename, obj)
-	if err == nil {
-		t.Fatalf(
-			"Read %s: file not exist err expected, none found",
+	if err := Read(filename, obj); err == nil {
+		t.Errorf(
+			"Read %s: want not-exist err, got nil",
 			filename,
 		)
+	} else if !os.IsNotExist(err) {
+		t.Errorf(
+			"Read %s: want not-exist err, got %s",
+			filename, err,
+		)
 	}
-	data := &struct {
-		Number  int
-		Boolean bool
-		Text    string
-	}{}
+}
 
-	filename = "jsonfile_test.go"
-	if err = Read(filename, obj); err == nil {
-		t.Fatalf(
-			"Read %s: failed unmarshal err expected, %s found",
-			filename,
-			err,
+func TestReadNotJson(t *testing.T) {
+	const filename = "testdata/invalid.json"
+	obj := &struct{}{}
+	if err := Read(filename, obj); err == nil {
+		t.Errorf(
+			"Read %s: want unmarshal error, got %s",
+			filename, err,
 		)
 	}
-	filename = "testdata/test_json"
-	if err = Read(filename, data); err != nil {
+}
+
+func TestRead(t *testing.T) {
+	data := new(testSturct)
+	const filename = "testdata/stronger.json"
+	if err := Read(filename, data); err != nil {
 		t.Fatalf(
-			"Failed to unmarshal from ./testdata/%s: %s",
-			filename,
-			err,
+			"Read %q: got error: %s", filename, err,
 		)
 	}
 
+	if !reflect.DeepEqual(data, testWriteData) {
+		t.Errorf(
+			"Read %s: want %v, got %v",
+			filename, testWriteData, data,
+		)
+	}
+}
+
+func TestWrite(t *testing.T) {
 	f, err := ioutil.TempFile("", "jsonfile-test")
 	if err != nil {
 		t.Fatal(err)
 	}
+	filename := f.Name()
+	f.Close()
+	defer os.Remove(filename)
 
-	expectedData := &struct {
-		Number  int
-		Boolean bool
-		Text    string
-	}{
-		Text: "be stronger",
+	if err := Write(filename, testWriteData); err != nil {
+		t.Fatalf("Failed to Write %s: %s", filename, err)
+	}
+	dat := new(testSturct)
+	if err := Read(filename, dat); err != nil {
+		t.Fatalf("Failed to Read %s: %s", filename, err)
 	}
 
-	filename = f.Name()
-
-	if err := Write(filename, data); err != nil {
-		t.Fatalf("Failed to Write %s: %v", filename, err)
+	if !reflect.DeepEqual(dat, testWriteData) {
+		t.Errorf("expect %v, got %v", testWriteData, dat)
 	}
+}
 
-	if err := Read(filename, obj); err != nil {
-		t.Fatalf("Failed to Read %s: %v", filename, err)
-	}
-
-	if !reflect.DeepEqual(data, expectedData) {
-		t.Errorf("expect %v, got %v", expectedData, data)
-	}
-
-	if err := WriteReadable(filename, data); err != nil {
-		t.Fatalf("Failed to WriteReadable %s: %v", filename, err)
-	}
-
-	content, err := ioutil.ReadFile(filename)
+func TestWriteReadable(t *testing.T) {
+	f, err := ioutil.TempFile("", "jsonfile-test")
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := "{\n    \"Number\": 0,\n" +
-		"    \"Boolean\": false,\n" +
-		"    \"Text\": \"be stronger\"\n" +
-		"}"
-	if string(content) != expected {
-		t.Errorf("expect WriteReadable as \n%s, get \n%s", expected, content)
+	filename := f.Name()
+	f.Close()
+	defer os.Remove(filename)
+
+	if err := WriteReadable(filename, testWriteData); err != nil {
+		t.Fatalf("Failed to WriteReadable %s: %s", filename, err)
 	}
 
-	f.Close()
-	os.Remove(filename) // ignore error
+	bs, err := ioutil.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(bs)
+	if got != testWriteReadable {
+		t.Errorf("WriteReadable want %q, got %q", testWriteReadable, got)
+	}
 }
