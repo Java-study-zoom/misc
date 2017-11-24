@@ -1,10 +1,11 @@
 package jsonfile
 
 import (
+	"testing"
+
 	"io/ioutil"
 	"os"
 	"reflect"
-	"testing"
 )
 
 type testSturct struct {

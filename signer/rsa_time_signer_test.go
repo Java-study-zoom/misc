@@ -2,41 +2,58 @@ package signer
 
 import (
 	"testing"
-	"time"
 
+	"time"
 	"crypto/rand"
 	"crypto/rsa"
 )
 
 func TestRSATimeSigner(t *testing.T) {
-	size := 1024
+	const size = 2048
 	key, err := rsa.GenerateKey(rand.Reader, size)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrongKey, err := rsa.GenerateKey(rand.Reader, size)
-	if err != nil {
-		t.Fatal(err)
-	}
+	now := time.Now()
+
 	s := NewRSATimeSigner(&key.PublicKey, time.Second)
-	b, err := RSASignTime(key)
-	signedTime := time.Now()
+	clock := now
+	s.TimeFunc = func() time.Time { return clock }
+
+	b, err := rsaSignTime(key, now)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s.Check(b) != nil && time.Since(signedTime) < time.Second {
-		t.Errorf("signer should be valid")
+
+	for _, test := range []struct {
+		diff time.Duration
+		ok bool
+	} {
+		{ 0, true },
+		{ time.Second / 2, true },
+		{ -time.Second / 2, true },
+		{ time.Second * 2, false },
+		{ -time.Second * 2, false },
+	} {
+		clock = now.Add(test.diff)
+		err := s.Check(b)
+		if err != nil && test.ok {
+			t.Errorf("unexpected error for time diff %s: %s", test.diff, err)
+		} else if err == nil && !test.ok {
+			t.Errorf("timestamp should be out of window for diff %s", test.diff)
+		}
 	}
-	time.Sleep(2 * time.Second)
-	if s.Check(b) == nil {
-		t.Errorf("signer should time out")
+
+	clock = now
+	anotherKey, err := rsa.GenerateKey(rand.Reader, size)
+	if err != nil {
+		t.Fatal(err)
 	}
-	b, err = RSASignTime(wrongKey)
+	b, err = rsaSignTime(anotherKey, now)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if s.Check(b) == nil {
 		t.Errorf("signer should not valid")
 	}
-
 }
