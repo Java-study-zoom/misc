@@ -46,15 +46,20 @@ func TestString(t *testing.T) {
 		{1, "yesterday"},
 		{12, "yesterday"},
 	} {
-		dummyTime := time.Date(1, 1, 1, test.hour, 0, 0, 0, time.UTC)
+		now := time.Date(1, 1, 1, test.hour, 0, 0, 0, time.UTC)
 		dur := 13 * time.Hour
-		got := String(dummyTime.Add(-dur), dummyTime)
+		got := String(now.Add(-dur), now)
 		if got != test.want {
 			t.Errorf(
-				"moment string for 13 hours afer %q: got %q, want %q",
-				dummyTime, got, test.want,
+				"moment string for %s afer %q: got %q, want %q",
+				dur, now, got, test.want,
 			)
 		}
+	}
+
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal(err)
 	}
 	for _, test := range []struct {
 		hour int
@@ -65,15 +70,14 @@ func TestString(t *testing.T) {
 		{1, "yesterday"},
 		{12, "yesterday"},
 	} {
-		loc, _ := time.LoadLocation("America/New_York")
-		UTCTime := time.Date(1, 1, 1, test.hour, 0, 0, 0, time.UTC)
+		utcTime := time.Date(1, 1, 1, test.hour, 0, 0, 0, time.UTC)
 		dur := 13 * time.Hour
-		NYTime := UTCTime.Add(-dur).In(loc)
-		got := String(NYTime, UTCTime)
+		nyTime := utcTime.Add(-dur).In(loc)
+		got := String(nyTime, utcTime)
 		if got != test.want {
 			t.Errorf(
-				"moment string for 13 hours afer %q, %q: got %q, want %q",
-				UTCTime, NYTime.In(time.UTC), got, test.want,
+				"moment string for %s afer %q, %q: got %q, want %q",
+				dur, utcTime, nyTime.In(time.UTC), got, test.want,
 			)
 		}
 	}
