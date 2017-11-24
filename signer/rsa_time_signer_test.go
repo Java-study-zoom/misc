@@ -3,9 +3,9 @@ package signer
 import (
 	"testing"
 
-	"time"
 	"crypto/rand"
 	"crypto/rsa"
+	"time"
 )
 
 func TestRSATimeSigner(t *testing.T) {
@@ -27,13 +27,13 @@ func TestRSATimeSigner(t *testing.T) {
 
 	for _, test := range []struct {
 		diff time.Duration
-		ok bool
-	} {
-		{ 0, true },
-		{ time.Second / 2, true },
-		{ -time.Second / 2, true },
-		{ time.Second * 2, false },
-		{ -time.Second * 2, false },
+		ok   bool
+	}{
+		{0, true},
+		{time.Second / 2, true},
+		{-time.Second / 2, true},
+		{time.Second * 2, false},
+		{-time.Second * 2, false},
 	} {
 		clock = now.Add(test.diff)
 		err := s.Check(b)
