@@ -16,6 +16,7 @@ const (
 	InvalidArg   = "invalid-arg"
 	Internal     = "internal"
 	Unauthorized = "unauthorized"
+	TimeOut      = "time-out"
 )
 
 // Add creates a new error with code as the error code.
@@ -55,6 +56,11 @@ func IsUnauthorized(err error) bool {
 	return Of(err) == Unauthorized
 }
 
+// IsTimeOut checks if it is an time-out error.
+func IsTimeOut(err error) bool {
+	return Of(err) == TimeOut
+}
+
 // Errorf creates an Error with the given error code.
 func Errorf(code string, f string, args ...interface{}) *Error {
 	return Add(code, fmt.Errorf(f, args...))
@@ -88,4 +94,9 @@ func Internalf(f string, args ...interface{}) *Error {
 // Unauthorizedf returns an error caused by unauthrozied request.
 func Unauthorizedf(f string, args ...interface{}) *Error {
 	return Errorf(Unauthorized, f, args...)
+}
+
+// TimeOutf returns an error caused by time-out request.
+func TimeOutf(f string, args ...interface{}) *Error {
+	return Errorf(TimeOut, f, args...)
 }

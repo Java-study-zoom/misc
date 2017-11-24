@@ -13,6 +13,7 @@ func TestCommonError(t *testing.T) {
 		{IsInvalidArg, InvalidArgf("invalid arg")},
 		{IsUnauthorized, Unauthorizedf("unauthorized")},
 		{IsInternal, Internalf("internal")},
+		{IsTimeOut, TimeOutf("time out")},
 	} {
 		if !test.f(test.err) {
 			t.Errorf("test failed for error: %s", test.err)

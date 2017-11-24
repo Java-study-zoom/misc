@@ -13,6 +13,7 @@ func now(f func() time.Time) time.Time {
 	return f()
 }
 
+// Is this what we want? The duration is actually 2w here
 func inWindow(t, tnow time.Time, w time.Duration) bool {
 	tstart := tnow.Add(-w)
 	tend := tnow.Add(w)
