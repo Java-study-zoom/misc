@@ -33,7 +33,7 @@ type ScanOptions struct {
 	// valid ones and being imported.
 	TestdataWhiteList map[string]bool
 
-	// PkgBlackList is a list of packages that will be skipped.  It will also
+	// PkgBlackList is a list of packages that will be skipped. It will also
 	// skip its sub packages.
 	PkgBlackList map[string]bool
 }
