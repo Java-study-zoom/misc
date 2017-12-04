@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Sessions signs a session data so that the server can be running stateless.
+// Sessions signs a session data so that the server can run statelessly.
 type Sessions struct {
 	s   *Signer
 	ttl time.Duration
