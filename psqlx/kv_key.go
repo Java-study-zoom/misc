@@ -31,7 +31,7 @@ func kvResError(res sql.Result, key string) error {
 		return err
 	} else if n == 0 {
 		return pathutil.NotExist(key)
-	} else if n == 1 {
+	} else if n != 1 {
 		return errors.New("multiple rows affected")
 	}
 	return nil
