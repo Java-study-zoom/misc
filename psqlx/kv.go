@@ -119,10 +119,10 @@ func (b *KV) Emplace(key string, v interface{}) error {
 		return err
 	}
 	q := fmt.Sprintf(`
-        insert into %s (k, v) values ($1, $2)
+        insert into %s (k, v, c) values ($1, $2, $3)
         on conflict (k) do nothing
     `, b.table)
-	_, err = b.db.X(q, mk, bs)
+	_, err = b.db.X(q, mk, bs, "")
 	return err
 }
 
@@ -137,10 +137,10 @@ func (b *KV) Replace(key string, v interface{}) error {
 		return err
 	}
 	q := fmt.Sprintf(`
-		insert into %s (k, v) values ($1, $2)
+		insert into %s (k, v, c) values ($1, $2, $3)
 		on conflict (k) do update set v=excluded.v
 	`, b.table)
-	_, err = b.db.X(q, mk, bs)
+	_, err = b.db.X(q, mk, bs, "")
 	return err
 }
 
@@ -152,10 +152,10 @@ func (b *KV) AppendBytes(key string, bs []byte) error {
 		return err
 	}
 	q := fmt.Sprintf(`
-		insert into %s (k, v) values ($1, $2)
+		insert into %s (k, v, c) values ($1, $2, $3)
 		on conflict (k) do update set v = %s.v || excluded.v
 	`, b.table, b.table)
-	_, err = b.db.X(q, mk, bs)
+	_, err = b.db.X(q, mk, bs, "")
 	return err
 }
 
@@ -186,7 +186,7 @@ func (b *KV) Set(key string, v interface{}) error {
 // ErrCancel cancels the operation.
 var ErrCancel = errors.New("operation cancelled")
 
-// Mutate applies a function
+// Mutate applies a function to an item.
 func (b *KV) Mutate(
 	k string, v interface{}, f func(v interface{}) error,
 ) error {
