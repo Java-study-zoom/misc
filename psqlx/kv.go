@@ -30,6 +30,13 @@ func (b *KV) mapKey(k string) (string, error) {
 	return kvMapKey(k, b.hashed)
 }
 
+// Clear clears the entire table.
+func (b *KV) Clear() error {
+	q := fmt.Sprintf(`truncate table %s`, b.table)
+	_, err := b.db.X(q)
+	return err
+}
+
 // AddClass adds an entry with a particular class.
 func (b *KV) AddClass(key, cls string, v interface{}) error {
 	bs, err := json.Marshal(v)
