@@ -1,6 +1,7 @@
 package idutil
 
-// Short returns the first 7 bytes of a string.
+// Short returns the first 7 bytes of an ID.
+// The prefix must be letters or digits.
 func Short(id string) string {
 	n := len(id)
 	for i, r := range id {
