@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"shanhu.io/misc/hashutil"
 	"shanhu.io/misc/pathutil"
+	"smallrepo.com/base/hashutil"
 )
 
 // MaxKeyLen is the maximum length of a hashed KV.
