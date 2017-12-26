@@ -128,7 +128,7 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 			return nil
 		}
 
-		ret.Pkgs[path] = newPkg(path, pkg.Imports)
+		ret.Pkgs[path] = pkg
 		return nil
 	}
 
