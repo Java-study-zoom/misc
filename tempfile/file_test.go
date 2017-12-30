@@ -6,19 +6,17 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+
+	"shanhu.io/misc/osutil"
 )
 
 func testFileExist(t *testing.T, name string) bool {
-	_, err := os.Stat(name)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
+	ret, err := osutil.Exist(name)
+	if err != nil {
+		t.Fatal(err)
 		return false
 	}
-
-	t.Fatal(err)
-	return false
+	return ret
 }
 
 func TestFileReadBack(t *testing.T) {

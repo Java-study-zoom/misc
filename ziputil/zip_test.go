@@ -10,6 +10,7 @@ import (
 	"path"
 	"reflect"
 
+	"shanhu.io/misc/osutil"
 	"shanhu.io/misc/tempfile"
 )
 
@@ -98,7 +99,6 @@ func TestZipDir(t *testing.T) {
 
 	output, err := ioutil.TempDir("", "ziputil")
 	ne(err)
-
 	defer os.RemoveAll(output)
 
 	z, err := zip.NewReader(temp, size)
@@ -116,3 +116,38 @@ func TestZipDir(t *testing.T) {
 		}
 	}
 }
+
+func testClearDir(t *testing.T, clear bool) {
+	ne := func(err error) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	z, err := zip.OpenReader("testdata/testfile.zip")
+	ne(err)
+	defer z.Close()
+
+	output, err := ioutil.TempDir("", "ziputil")
+	ne(err)
+	defer os.RemoveAll(output)
+
+	ob := path.Join(output, "native-file")
+	ne(ioutil.WriteFile(ob, []byte("lived here long time ago"), 0600))
+
+	ne(UnzipDir(output, &z.Reader, clear))
+
+	exist, err := osutil.Exist(ob)
+	ne(err)
+
+	if clear && exist {
+		t.Error("should clear directory, but still see the file")
+	}
+	if !clear && !exist {
+		t.Error("should preserve the file, but lost")
+	}
+}
+
+func TestClearDir(t *testing.T) { testClearDir(t, true) }
+
+func TestNoClearDir(t *testing.T) { testClearDir(t, false) }
