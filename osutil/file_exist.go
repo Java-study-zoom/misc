@@ -5,13 +5,13 @@ import (
 )
 
 // Exist checks if a file exists.
-func Exist(name string) (bool, error) {
-	_, err := os.Stat(name)
-	if err == nil {
-		return true, nil
+func Exist(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
+	return true, nil
 }
