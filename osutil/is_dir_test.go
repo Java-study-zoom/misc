@@ -2,7 +2,7 @@ package osutil
 
 import (
 	"testing"
-	
+
 	"io/ioutil"
 	"os"
 	"path"
@@ -33,7 +33,7 @@ func TestIsDir(t *testing.T) {
 	if ok {
 		t.Errorf("IsDir(%q) should return false", f)
 	}
-	
+
 	ok, err = IsDir(path.Join(d, "ghost"))
 	ne(err)
 	if ok {
