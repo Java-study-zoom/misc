@@ -11,6 +11,10 @@ func ForNow(t time.Time) string {
 	return String(t, time.Now())
 }
 
+func timeDate(t time.Time) string {
+	return t.Format("20060102")
+}
+
 // String returns a human friendly string for describing a time point t
 // relative to the time point of now. When calculating time differences, it
 // uses the time zone of the time point of now.
@@ -42,7 +46,7 @@ func String(t, now time.Time) string {
 	if hours <= 1 {
 		return "an hour ago"
 	}
-	if hours <= 12 || t.Day() == now.Day() {
+	if hours <= 12 || timeDate(t) == timeDate(now) {
 		return fmt.Sprintf("%d hours ago", hours)
 	}
 
