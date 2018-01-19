@@ -114,8 +114,8 @@ func (b *KV) Get(key string, v interface{}) error {
 	return json.Unmarshal(bs, v)
 }
 
-// Emplace sets the value for a particular key. Does nothing if the key does
-// not exist.
+// Emplace sets the value for a particular key. Does nothing if the key already
+// exists.
 func (b *KV) Emplace(key string, v interface{}) error {
 	mk, err := b.mapKey(key)
 	if err != nil {
