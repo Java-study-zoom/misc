@@ -20,8 +20,21 @@ func (t *Trie) Add(route []string, value string) bool {
 	return t.root.add(route, value)
 }
 
-// Find looks for the value of a particular route.
+// FindExact looks for the value of a particular route.
 // Returns empty string if not found.
-func (t *Trie) Find(route []string) string {
-	return t.root.find(route)
+func (t *Trie) FindExact(route []string) string {
+	n, v := t.root.find(route)
+	if n != len(route) {
+		return ""
+	}
+	return v
+}
+
+// Find looks for the longest prefix match for the route.
+func (t *Trie) Find(route []string) (match []string, v string) {
+	n, v := t.root.find(route)
+	if v == "" {
+		return nil, ""
+	}
+	return route[:n], v
 }

@@ -14,8 +14,12 @@ func trieAddPath(t *Trie, p string) bool {
 	return t.Add(pathSplit(p), p)
 }
 
-func trieFindPath(t *Trie, p string) string {
-	return t.Find(pathSplit(p))
+func trieFindPath(t *Trie, p string) (string, string) {
+	route, v := t.Find(pathSplit(p))
+	if v == "" {
+		return "", ""
+	}
+	return strings.Join(route, "/"), v
 }
 
 func TestTrie(t *testing.T) {
@@ -35,13 +39,33 @@ func TestTrie(t *testing.T) {
 		t.Error("should fail to add duplicate path")
 	}
 
-	as(trieFindPath(tr, "a/c") == "a/c")
-	as(trieFindPath(tr, "a/b/c") == "a/b/c")
-	as(trieFindPath(tr, "a/b") == "a/b")
-	as(trieFindPath(tr, "abc") == "abc")
+	for _, test := range []struct {
+		input string
+		output string
+	} {
+		{ "a/c", "a/c"},
+		{ "a/b/c", "a/b/c"},
+		{ "a/b", "a/b"},
+		{"abc", "abc"},
+		{ "a/c/d", "a/c"},
+		{"a/b/c/d", "a/b/c"},
+	} {
+		r, v := trieFindPath(tr, test.input)
+		if r != v {
+			t.Errorf("find %q, got %q != %q", test.input, r, v)
+		}
+		if r != test.output {
+			t.Errorf("find %q, want %q, got %q", test.input, test.output, r)
+		}
+	}
 
-	as(trieFindPath(tr, "def") == "")
-	as(trieFindPath(tr, "a/c/d") == "")
-	as(trieFindPath(tr, "a") == "")
-	as(trieFindPath(tr, "a/b/c/d") == "")
+	for _, p := range []string {
+		"def",
+		"a",
+	} {
+		r, v := trieFindPath(tr, p)
+		if r != "" || v != "" {
+			t.Errorf("find %q, want not found, got %q, %q", p, r, v)
+		}
+	}
 }
