@@ -39,7 +39,7 @@ func TestTrie(t *testing.T) {
 	as(trieFindPath(tr, "a/b/c") == "a/b/c")
 	as(trieFindPath(tr, "a/b") == "a/b")
 	as(trieFindPath(tr, "abc") == "abc")
-	
+
 	as(trieFindPath(tr, "def") == "")
 	as(trieFindPath(tr, "a/c/d") == "")
 	as(trieFindPath(tr, "a") == "")
