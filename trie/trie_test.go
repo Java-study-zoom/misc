@@ -40,14 +40,14 @@ func TestTrie(t *testing.T) {
 	}
 
 	for _, test := range []struct {
-		input string
+		input  string
 		output string
-	} {
-		{ "a/c", "a/c"},
-		{ "a/b/c", "a/b/c"},
-		{ "a/b", "a/b"},
+	}{
+		{"a/c", "a/c"},
+		{"a/b/c", "a/b/c"},
+		{"a/b", "a/b"},
 		{"abc", "abc"},
-		{ "a/c/d", "a/c"},
+		{"a/c/d", "a/c"},
 		{"a/b/c/d", "a/b/c"},
 	} {
 		r, v := trieFindPath(tr, test.input)
@@ -59,7 +59,7 @@ func TestTrie(t *testing.T) {
 		}
 	}
 
-	for _, p := range []string {
+	for _, p := range []string{
 		"def",
 		"a",
 	} {

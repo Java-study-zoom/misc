@@ -38,14 +38,14 @@ func (n *node) findSub(route []string) (int, string) {
 	if v == "" {
 		return 0, ""
 	}
-	return ret+1, v
+	return ret + 1, v
 }
 
 func (n *node) find(route []string) (int, string) {
 	if len(route) == 0 {
 		return 0, n.value
 	}
-	
+
 	ret, v := n.findSub(route)
 	if v != "" {
 		return ret, v
