@@ -34,7 +34,7 @@ func tokType(t token.Token, lit string) string {
 }
 
 // Tokens breaks a Go language program in a token stream.
-func Tokens(bs []byte) ([]*syntax.Token, error) {
+func Tokens(bs []byte) []*syntax.Token {
 	fset := token.NewFileSet()
 	f := fset.AddFile("a.go", fset.Base(), len(bs))
 	s := new(scanner.Scanner)
@@ -68,14 +68,11 @@ func Tokens(bs []byte) ([]*syntax.Token, error) {
 		endPos = offset + len(lit)
 	}
 
-	return ret, nil
+	return ret
 }
 
 // HTML renders a G language file into HTML file.
-func HTML(bs []byte) (string, error) {
-	toks, err := Tokens(bs)
-	if err != nil {
-		return "", err
-	}
-	return syntax.RenderHTML(toks), nil
+func HTML(bs []byte) string {
+	toks := Tokens(bs)
+	return syntax.RenderHTML(toks)
 }
