@@ -111,7 +111,6 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 			return filepath.SkipDir
 		case "vendor":
 			ret.HasVendor = true
-			return filepath.SkipDir
 		case "internal":
 			ret.HasInternal = true
 		}
