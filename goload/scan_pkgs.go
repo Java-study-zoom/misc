@@ -3,6 +3,7 @@ package goload
 import (
 	"go/build"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -46,9 +47,11 @@ func inSet(s map[string]bool, k string) bool {
 }
 
 type scanner struct {
-	path string
-	ctx  *build.Context
-	opts *ScanOptions
+	path    string
+	ctx     *build.Context
+	srcRoot string
+	opts    *ScanOptions
+	res     *ScanResult
 }
 
 func newScanner(p string, opts *ScanOptions) *scanner {
@@ -67,7 +70,88 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 		ret.ctx = &build.Default
 	}
 
+	ret.srcRoot = filepath.Join(ret.ctx.GOPATH, "src")
+
 	return ret
+}
+
+func (s *scanner) handleDir(dir, path string) error {
+	if inSet(s.opts.PkgBlackList, path) {
+		return filepath.SkipDir
+	}
+
+	base := filepath.Base(path)
+	if strings.HasPrefix(base, "_") || strings.HasPrefix(base, ".") {
+		return filepath.SkipDir
+	}
+
+	switch base {
+	case "testdata":
+		if !inSet(s.opts.TestdataWhiteList, path) {
+			return filepath.SkipDir
+		}
+	case "vendor":
+		s.res.HasVendor = true
+	case "internal":
+		s.res.HasInternal = true
+	}
+
+	pkg, err := s.ctx.Import(path, "", 0) // check if it is a package
+	if err != nil {
+		if isNoGoError(err) {
+			return nil
+		}
+		return err
+	}
+
+	if len(pkg.GoFiles) == 0 && len(pkg.CgoFiles) == 0 {
+		return nil
+	}
+
+	s.res.Pkgs[path] = pkg
+	return nil
+}
+
+func (s *scanner) walk(dir, p string) error {
+	info, err := os.Lstat(dir)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return nil
+	}
+
+	if err := s.handleDir(dir, p); err != nil {
+		if err == filepath.SkipDir {
+			return nil
+		}
+		return err
+	}
+
+	f, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+	names, err := f.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+
+	sort.Strings(names)
+	for _, name := range names {
+		subDir := filepath.Join(dir, name)
+		subPath := path.Join(p, name)
+		if err := s.walk(subDir, subPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ScanPkgs scans all packages under a package path.
@@ -75,67 +159,12 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 	s := newScanner(p, opts)
 
 	// First check if the folder can be found.
-	pkg, e := s.ctx.Import(p, "", build.FindOnly)
-	if e != nil && !isNoGoError(e) {
-		return nil, e
-	}
-
-	ret := newScanResult(p)
-	walk := func(p string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			return nil
-		}
-
-		path, e := filepath.Rel(pkg.SrcRoot, p)
-		if e != nil {
-			return e
-		}
-		if inSet(s.opts.PkgBlackList, path) {
-			return filepath.SkipDir
-		}
-
-		base := filepath.Base(path)
-
-		if strings.HasPrefix(base, "_") || strings.HasPrefix(base, ".") {
-			return filepath.SkipDir
-		}
-
-		switch base {
-		case "testdata":
-			if inSet(s.opts.TestdataWhiteList, path) {
-				break
-			}
-			return filepath.SkipDir
-		case "vendor":
-			ret.HasVendor = true
-		case "internal":
-			ret.HasInternal = true
-		}
-
-		pkg, err := s.ctx.Import(path, "", 0) // check if it is a package
-		if err != nil {
-			if isNoGoError(err) { // not a go language package
-				return nil
-			}
-			return err
-		}
-
-		if len(pkg.GoFiles) == 0 && len(pkg.CgoFiles) == 0 {
-			return nil
-		}
-
-		ret.Pkgs[path] = pkg
-		return nil
-	}
-
-	if err := filepath.Walk(pkg.Dir, walk); err != nil {
+	s.res = newScanResult(p)
+	dir := filepath.Join(s.srcRoot, filepath.ToSlash(p))
+	if err := s.walk(dir, p); err != nil && err != filepath.SkipDir {
 		return nil, err
 	}
-
-	return ret, nil
+	return s.res, nil
 }
 
 // ListPkgs list all packages under a package path.
