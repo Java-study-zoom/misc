@@ -46,12 +46,32 @@ func inSet(s map[string]bool, k string) bool {
 	return s[k]
 }
 
+type scanDir struct {
+	dir    string
+	path   string // import path
+	base   string
+	vendor *vendorLayer
+}
+
+func (d *scanDir) sub(sub string) *scanDir {
+	return &scanDir{
+		dir:    filepath.Join(d.dir, sub),
+		path:   path.Join(d.path, sub),
+		base:   sub,
+		vendor: d.vendor,
+	}
+}
+
 type scanner struct {
 	path    string
 	ctx     *build.Context
 	srcRoot string
 	opts    *ScanOptions
 	res     *ScanResult
+
+	vendorStack    *vendorStack
+	vendorLayers   map[string]*vendorLayer
+	vendorScanning bool
 }
 
 func newScanner(p string, opts *ScanOptions) *scanner {
@@ -60,8 +80,10 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	}
 
 	ret := &scanner{
-		path: p,
-		opts: opts,
+		path:         p,
+		opts:         opts,
+		vendorStack:  new(vendorStack),
+		vendorLayers: make(map[string]*vendorLayer),
 	}
 
 	if opts.Context != nil {
@@ -75,19 +97,19 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	return ret
 }
 
-func (s *scanner) handleDir(dir, path string) error {
-	if inSet(s.opts.PkgBlackList, path) {
+func (s *scanner) handleDir(dir *scanDir) error {
+	if inSet(s.opts.PkgBlackList, dir.path) {
 		return filepath.SkipDir
 	}
 
-	base := filepath.Base(path)
+	base := dir.base
 	if strings.HasPrefix(base, "_") || strings.HasPrefix(base, ".") {
 		return filepath.SkipDir
 	}
 
 	switch base {
 	case "testdata":
-		if !inSet(s.opts.TestdataWhiteList, path) {
+		if !inSet(s.opts.TestdataWhiteList, dir.path) {
 			return filepath.SkipDir
 		}
 	case "vendor":
@@ -96,24 +118,51 @@ func (s *scanner) handleDir(dir, path string) error {
 		s.res.HasInternal = true
 	}
 
-	pkg, err := s.ctx.Import(path, "", 0) // check if it is a package
-	if err != nil {
-		if isNoGoError(err) {
+	mode := build.ImportMode(0)
+
+	if s.vendorScanning {
+		// check if it is a package
+		pkg, err := s.ctx.Import(dir.path, "", mode)
+		if err != nil {
+			if isNoGoError(err) {
+				return nil
+			}
+			return err
+		}
+
+		if len(pkg.GoFiles) == 0 && len(pkg.CgoFiles) == 0 {
 			return nil
 		}
-		return err
-	}
 
-	if len(pkg.GoFiles) == 0 && len(pkg.CgoFiles) == 0 {
-		return nil
-	}
+		if dir.vendor != nil {
+			dir.vendor.addPkg(dir.path)
+		}
 
-	s.res.Pkgs[path] = pkg
+		s.res.Pkgs[dir.path] = pkg
+	} else {
+		pkg, found := s.res.Pkgs[dir.path]
+		if !found {
+			return nil
+		}
+
+		importMap := make(map[string]string)
+		for _, imp := range pkg.Imports {
+			mapped, hit := s.vendorStack.mapImport(imp)
+			if !hit {
+				continue
+			}
+			importMap[imp] = mapped
+		}
+
+		if len(importMap) > 0 {
+			s.res.ImportMap[dir.path] = importMap
+		}
+	}
 	return nil
 }
 
-func (s *scanner) walk(dir, p string) error {
-	info, err := os.Lstat(dir)
+func (s *scanner) walk(dir *scanDir) error {
+	info, err := os.Lstat(dir.dir)
 	if err != nil {
 		return err
 	}
@@ -121,14 +170,7 @@ func (s *scanner) walk(dir, p string) error {
 		return nil
 	}
 
-	if err := s.handleDir(dir, p); err != nil {
-		if err == filepath.SkipDir {
-			return nil
-		}
-		return err
-	}
-
-	f, err := os.Open(dir)
+	f, err := os.Open(dir.dir)
 	if err != nil {
 		return err
 	}
@@ -143,10 +185,39 @@ func (s *scanner) walk(dir, p string) error {
 	}
 
 	sort.Strings(names)
+
+	if !s.vendorScanning {
+		index := sort.SearchStrings(names, "vendor")
+		hasVendor := index < len(names) && names[index] == "vendor"
+		if hasVendor {
+			ly := s.vendorLayers[dir.path]
+			if ly == nil {
+				panic("vendor layer missing")
+			}
+			if len(ly.pkgs) > 0 {
+				s.vendorStack.push(ly)
+				defer s.vendorStack.pop()
+			}
+		}
+	}
+
+	if err := s.handleDir(dir); err != nil {
+		if err == filepath.SkipDir {
+			return nil
+		}
+		return err
+	}
+
 	for _, name := range names {
-		subDir := filepath.Join(dir, name)
-		subPath := path.Join(p, name)
-		if err := s.walk(subDir, subPath); err != nil {
+		sub := dir.sub(name)
+
+		if s.vendorScanning && name == "vendor" {
+			ly := newVendorLayer(dir.path)
+			s.vendorLayers[dir.path] = ly
+			sub.vendor = ly
+		}
+
+		if err := s.walk(sub); err != nil {
 			return err
 		}
 	}
@@ -160,10 +231,19 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 
 	// First check if the folder can be found.
 	s.res = newScanResult(p)
-	dir := filepath.Join(s.srcRoot, filepath.ToSlash(p))
-	if err := s.walk(dir, p); err != nil && err != filepath.SkipDir {
-		return nil, err
+	dir := &scanDir{
+		dir:  filepath.Join(s.srcRoot, filepath.ToSlash(p)),
+		path: p,
+		base: path.Base(p),
 	}
+
+	for _, scanning := range []bool{true, false} {
+		s.vendorScanning = scanning
+		if err := s.walk(dir); err != nil && err != filepath.SkipDir {
+			return nil, err
+		}
+	}
+
 	return s.res, nil
 }
 
