@@ -32,7 +32,7 @@ func orderStr(desc bool) string {
 	if desc {
 		return "desc"
 	}
-	return "acs"
+	return "asc"
 }
 
 // KVPartial specifies a partial of results.
