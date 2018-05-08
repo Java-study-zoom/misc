@@ -118,7 +118,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 		s.res.HasInternal = true
 	}
 
-	mode := build.ImportMode(0)
+	mode := build.ImportComment
 
 	if s.vendorScanning {
 		// check if it is a package
