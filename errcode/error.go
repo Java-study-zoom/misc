@@ -75,6 +75,11 @@ func AltErrorf(err error, msg string, args ...interface{}) error {
 	return Errorf(cerr.Code, msg, args...)
 }
 
+// Annotate annotates an error but keeps the error code.
+func Annotate(err error, msg string) error {
+	return AltErrorf(err, "%s: %s", msg, err)
+}
+
 // NotFoundf creates a new not-found error.
 func NotFoundf(f string, args ...interface{}) *Error {
 	return Errorf(NotFound, f, args...)
