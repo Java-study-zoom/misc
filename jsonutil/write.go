@@ -1,4 +1,4 @@
-package jsonfile
+package jsonutil
 
 import (
 	"bytes"
@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 )
 
-// Write marshals a JSON object and writes it into a file.
-func Write(file string, obj interface{}) error {
+// WriteFile marshals a JSON object and writes it into a file.
+func WriteFile(file string, obj interface{}) error {
 	bs, err := json.Marshal(obj)
 	if err != nil {
 		return err
@@ -15,9 +15,9 @@ func Write(file string, obj interface{}) error {
 	return ioutil.WriteFile(file, bs, 0644)
 }
 
-// WriteReadable marshals a JSON object with indents and writes it into
-// a file.
-func WriteReadable(f string, v interface{}) error {
+// WriteFileReadable marshals a JSON object with indents and writes it into a
+// file.
+func WriteFileReadable(f string, v interface{}) error {
 	buf := new(bytes.Buffer)
 	bs, err := json.MarshalIndent(v, "", "    ")
 	if err != nil {

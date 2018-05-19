@@ -1,4 +1,4 @@
-package jsonfile
+package jsonutil
 
 import (
 	"testing"
@@ -27,7 +27,7 @@ const testWriteReadable = `{
 func TestReadNotExist(t *testing.T) {
 	const filename = "testdata/rumpelstilzchen"
 	obj := &struct{}{}
-	if err := Read(filename, obj); err == nil {
+	if err := ReadFile(filename, obj); err == nil {
 		t.Errorf(
 			"Read %s: want not-exist err, got nil",
 			filename,
@@ -43,7 +43,7 @@ func TestReadNotExist(t *testing.T) {
 func TestReadNotJson(t *testing.T) {
 	const filename = "testdata/invalid.json"
 	obj := &struct{}{}
-	if err := Read(filename, obj); err == nil {
+	if err := ReadFile(filename, obj); err == nil {
 		t.Errorf(
 			"Read %s: want unmarshal error, got %s",
 			filename, err,
@@ -54,7 +54,7 @@ func TestReadNotJson(t *testing.T) {
 func TestRead(t *testing.T) {
 	data := new(testSturct)
 	const filename = "testdata/stronger.json"
-	if err := Read(filename, data); err != nil {
+	if err := ReadFile(filename, data); err != nil {
 		t.Fatalf(
 			"Read %q: got error: %s", filename, err,
 		)
@@ -77,11 +77,11 @@ func TestWrite(t *testing.T) {
 	f.Close()
 	defer os.Remove(filename)
 
-	if err := Write(filename, testWriteData); err != nil {
+	if err := WriteFile(filename, testWriteData); err != nil {
 		t.Fatalf("Failed to Write %s: %s", filename, err)
 	}
 	dat := new(testSturct)
-	if err := Read(filename, dat); err != nil {
+	if err := ReadFile(filename, dat); err != nil {
 		t.Fatalf("Failed to Read %s: %s", filename, err)
 	}
 
@@ -99,7 +99,7 @@ func TestWriteReadable(t *testing.T) {
 	f.Close()
 	defer os.Remove(filename)
 
-	if err := WriteReadable(filename, testWriteData); err != nil {
+	if err := WriteFileReadable(filename, testWriteData); err != nil {
 		t.Fatalf("Failed to WriteReadable %s: %s", filename, err)
 	}
 
