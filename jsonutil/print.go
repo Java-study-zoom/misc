@@ -1,11 +1,11 @@
 package jsonutil
 
 import (
-	"io"
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 	"log"
+	"os"
 )
 
 // Fprint pretty prints a JSON data blob into a writer.
