@@ -98,21 +98,22 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	return ret
 }
 
-func (s *scanner) handleDir(dir *scanDir) error {
+func (s *scanner) skipDir(dir *scanDir) bool {
 	if inSet(s.opts.PkgBlackList, dir.path) {
-		return filepath.SkipDir
+		return true
 	}
-
 	base := dir.base
 	if strings.HasPrefix(base, "_") || strings.HasPrefix(base, ".") {
-		return filepath.SkipDir
+		return true
 	}
+	if base == "testdata" && !inSet(s.opts.TestdataWhiteList, dir.path) {
+		return true
+	}
+	return false
+}
 
-	switch base {
-	case "testdata":
-		if !inSet(s.opts.TestdataWhiteList, dir.path) {
-			return filepath.SkipDir
-		}
+func (s *scanner) handleDir(dir *scanDir) error {
+	switch dir.base {
 	case "vendor":
 		s.res.HasVendor = true
 	case "internal":
@@ -168,6 +169,10 @@ func (s *scanner) walk(dir *scanDir) error {
 		return err
 	}
 	if !info.IsDir() {
+		return nil
+	}
+
+	if s.skipDir(dir) {
 		return nil
 	}
 
