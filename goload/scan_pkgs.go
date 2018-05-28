@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"fmt"
 )
 
 func isNoGoError(e error) bool {
@@ -192,7 +193,7 @@ func (s *scanner) walk(dir *scanDir) error {
 		if hasVendor {
 			ly := s.vendorLayers[dir.path]
 			if ly == nil {
-				panic("vendor layer missing")
+				panic(fmt.Sprintf("vendor layer missing: %s", dir.path))
 			}
 			if len(ly.pkgs) > 0 {
 				s.vendorStack.push(ly)
