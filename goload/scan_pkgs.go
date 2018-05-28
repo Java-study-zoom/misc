@@ -1,13 +1,13 @@
 package goload
 
 import (
+	"fmt"
 	"go/build"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
-	"fmt"
 )
 
 func isNoGoError(e error) bool {
