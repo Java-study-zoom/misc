@@ -45,7 +45,7 @@ func Make(h *Header, body []byte) []byte {
 	printHeader(b, "Subject", h.Subject)
 	printHeader(b, "MIME-Version", "1.0;")
 	printHeader(b, "Content-Type", `test/html; charset="UTF-8"`)
-	fmt.Fprint(b, "\r\n")
+	fmt.Fprint(b, "\r\n\r\n")
 	b.Write(body)
 	return b.Bytes()
 }
