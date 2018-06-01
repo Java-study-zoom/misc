@@ -6,28 +6,18 @@ import (
 	"time"
 )
 
-// Address is an email address.
-type Address struct {
-	Name  string
-	Email string
-}
-
-// NewAddress creates a new email address.
-func NewAddress(name, email string) *Address {
-	return &Address{Name: name, Email: email}
-}
-
-func (a *Address) String() string {
-	if a.Name == "" {
-		return a.Email
+// Address creates a new email address.
+func Address(name, email string) string {
+	if name == "" {
+		return email
 	}
-	return fmt.Sprintf("%s <%s>", a.Name, a.Email)
+	return fmt.Sprintf("%s <%s>", name, email)
 }
 
 // Header is an email header.
 type Header struct {
-	From    *Address
-	To      *Address
+	From    string
+	To      string
 	Subject string
 	Time    time.Time
 }
@@ -40,8 +30,8 @@ func printHeader(b *bytes.Buffer, k, v string) {
 func Make(h *Header, body []byte) []byte {
 	b := new(bytes.Buffer)
 	printHeader(b, "Date", h.Time.String())
-	printHeader(b, "From", h.From.String())
-	printHeader(b, "To", h.To.String())
+	printHeader(b, "From", h.From)
+	printHeader(b, "To", h.To)
 	printHeader(b, "Subject", h.Subject)
 	printHeader(b, "MIME-Version", "1.0;")
 	printHeader(b, "Content-Type", `text/html; charset="UTF-8"`)
