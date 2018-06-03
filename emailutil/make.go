@@ -3,8 +3,8 @@ package emailutil
 import (
 	"bytes"
 	"fmt"
-	"time"
 	"html/template"
+	"time"
 )
 
 // Address creates a new email address.
