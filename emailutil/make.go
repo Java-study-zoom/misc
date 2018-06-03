@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"time"
+	"html/template"
 )
 
 // Address creates a new email address.
@@ -38,4 +39,15 @@ func Make(h *Header, body []byte) []byte {
 	fmt.Fprint(b, "\r\n")
 	b.Write(body)
 	return b.Bytes()
+}
+
+// TemplateMake creates an email using the given template
+func TemplateMake(
+	h *Header, t *template.Template, dat interface{},
+) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := t.Execute(buf, dat); err != nil {
+		return nil, err
+	}
+	return Make(h, buf.Bytes()), nil
 }
