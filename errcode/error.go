@@ -83,7 +83,7 @@ func Annotate(err error, msg string) error {
 // Annotatef annotates an error with a formatted message but keeps the error
 // code.
 func Annotatef(err error, f string, args ...interface{}) error {
-	return Annotatef(err, fmt.Sprintf(f, args...))
+	return Annotate(err, fmt.Sprintf(f, args...))
 }
 
 // NotFoundf creates a new not-found error.
