@@ -123,6 +123,10 @@ func (s *scanner) handleDir(dir *scanDir) error {
 	mode := build.ImportComment
 
 	if s.vendorScanning {
+		if inSet(s.opts.PkgBlackList, "!"+dir.path) {
+			return nil
+		}
+
 		// check if it is a package
 		pkg, err := s.ctx.Import(dir.path, "", mode)
 		if err != nil {
