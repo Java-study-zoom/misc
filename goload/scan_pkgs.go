@@ -144,7 +144,9 @@ func (s *scanner) handleDir(dir *scanDir) error {
 			dir.vendor.addPkg(dir.path)
 		}
 
-		s.res.Pkgs[dir.path] = pkg
+		s.res.Pkgs[dir.path] = &Package{
+			Build: pkg,
+		}
 	} else {
 		pkg, found := s.res.Pkgs[dir.path]
 		if !found {
@@ -152,7 +154,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 		}
 
 		importMap := make(map[string]string)
-		for _, imp := range pkg.Imports {
+		for _, imp := range pkg.Build.Imports {
 			mapped, hit := s.vendorStack.mapImport(imp)
 			if !hit {
 				continue
@@ -161,7 +163,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 		}
 
 		if len(importMap) > 0 {
-			s.res.ImportMap[dir.path] = importMap
+			pkg.ImportMap = importMap
 		}
 	}
 	return nil
