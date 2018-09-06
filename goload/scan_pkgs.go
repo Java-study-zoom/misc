@@ -52,15 +52,24 @@ type scanDir struct {
 	path   string // import path
 	base   string
 	vendor *vendorLayer
+
+	modPath string // import path with module enabled
+	modRoot string // root of module
 }
 
 func (d *scanDir) sub(sub string) *scanDir {
-	return &scanDir{
-		dir:    filepath.Join(d.dir, sub),
-		path:   path.Join(d.path, sub),
-		base:   sub,
-		vendor: d.vendor,
+	ret := &scanDir{
+		dir:     filepath.Join(d.dir, sub),
+		path:    path.Join(d.path, sub),
+		base:    sub,
+		vendor:  d.vendor,
+		modRoot: d.modRoot,
 	}
+
+	if d.modPath != "" {
+		ret.modPath = path.Join(d.modPath, sub)
+	}
+	return ret
 }
 
 type scanner struct {
@@ -147,6 +156,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 		s.res.Pkgs[dir.path] = &Package{
 			Build: pkg,
 		}
+		fmt.Printf("%s - %s\n", dir.path, pkg.ImportPath)
 	} else {
 		pkg, found := s.res.Pkgs[dir.path]
 		if !found {

@@ -8,6 +8,9 @@ import (
 type Package struct {
 	Build     *build.Package
 	ImportMap map[string]string
+
+	ModRoot string
+	ModPath string // alias import path when module is enabled
 }
 
 // ScanResult has the scanning result
