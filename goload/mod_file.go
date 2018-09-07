@@ -45,6 +45,15 @@ func modulePath(bs []byte) (string, error) {
 		}
 
 		line = strings.TrimSpace(strings.TrimPrefix(line, "module"))
+
+		// TODO: this is incorrect for quoted module path
+		if pos := strings.Index(line, "//"); pos >= 0 {
+			line = strings.TrimSpace(line[:pos])
+			if line == "" {
+				return "", errInvalidModFile
+			}
+		}
+
 		if line == "" {
 			return "", errInvalidModFile
 		}
@@ -55,6 +64,7 @@ func modulePath(bs []byte) (string, error) {
 			}
 			return p, nil
 		}
+
 		return line, nil
 	}
 
