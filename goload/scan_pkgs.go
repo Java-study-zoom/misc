@@ -133,7 +133,6 @@ func (s *scanner) handleDir(dir *scanDir) error {
 		s.res.Pkgs[dir.path] = &Package{
 			Build: pkg,
 		}
-		fmt.Printf("%s - %s\n", dir.path, pkg.ImportPath)
 	} else {
 		pkg, found := s.res.Pkgs[dir.path]
 		if !found {
