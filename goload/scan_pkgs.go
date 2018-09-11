@@ -45,8 +45,6 @@ type scanner struct {
 	modRoot    string // import path for the mod root in non-mod mode
 	modVerRoot string // import path for the mod root in mod enabled mode
 
-	modRoots map[string]string
-
 	vendorStack    *vendorStack
 	vendorLayers   map[string]*vendorLayer
 	vendorScanning bool
@@ -60,7 +58,6 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	ret := &scanner{
 		path:         p,
 		opts:         opts,
-		modRoots:     make(map[string]string),
 		vendorStack:  new(vendorStack),
 		vendorLayers: make(map[string]*vendorLayer),
 	}
@@ -139,10 +136,12 @@ func (s *scanner) handleDir(dir *scanDir) error {
 			return nil
 		}
 
-		pkg.ModRoot = s.modRoot
-		pkg.ModVerRoot = s.modVerRoot
-		modRel := pathutil.Relative(s.modRoot, dir.path)
-		pkg.ModVerPath = path.Join(s.modVerRoot, modRel)
+		if s.modRoot != "" {
+			pkg.ModRoot = s.modRoot
+			pkg.ModVerRoot = s.modVerRoot
+			modRel := pathutil.Relative(s.modRoot, dir.path)
+			pkg.ModVerPath = path.Join(s.modVerRoot, modRel)
+		}
 
 		importMap := make(map[string]string)
 		for _, imp := range pkg.Build.Imports {
@@ -200,7 +199,7 @@ func (s *scanner) walk(dir *scanDir) error {
 		}
 	}
 
-	if s.vendorScanning {
+	if !s.vendorScanning {
 		if s.modRoot == "" && findInSorted(names, "go.mod") {
 			p := filepath.Join(dir.dir, "go.mod")
 			modFile, err := parseModFile(p)
