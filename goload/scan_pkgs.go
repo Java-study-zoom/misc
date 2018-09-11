@@ -3,20 +3,15 @@ package goload
 import (
 	"fmt"
 	"go/build"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
-)
 
-func isNoGoError(e error) bool {
-	if e == nil {
-		return false
-	}
-	_, hit := e.(*build.NoGoError)
-	return hit
-}
+	"shanhu.io/misc/pathutil"
+)
 
 // MakeContext makes a build context for the given GOPATH.
 func MakeContext(gopath string) *build.Context {
@@ -40,44 +35,17 @@ type ScanOptions struct {
 	PkgBlackList map[string]bool
 }
 
-func inSet(s map[string]bool, k string) bool {
-	if s == nil {
-		return false
-	}
-	return s[k]
-}
-
-type scanDir struct {
-	dir    string
-	path   string // import path
-	base   string
-	vendor *vendorLayer
-
-	modPath string // import path with module enabled
-	modRoot string // root of module
-}
-
-func (d *scanDir) sub(sub string) *scanDir {
-	ret := &scanDir{
-		dir:     filepath.Join(d.dir, sub),
-		path:    path.Join(d.path, sub),
-		base:    sub,
-		vendor:  d.vendor,
-		modRoot: d.modRoot,
-	}
-
-	if d.modPath != "" {
-		ret.modPath = path.Join(d.modPath, sub)
-	}
-	return ret
-}
-
 type scanner struct {
 	path    string
 	ctx     *build.Context
 	srcRoot string
 	opts    *ScanOptions
 	res     *ScanResult
+
+	modRoot    string // import path for the mod root in non-mod mode
+	modVerRoot string // import path for the mod root in mod enabled mode
+
+	modRoots map[string]string
 
 	vendorStack    *vendorStack
 	vendorLayers   map[string]*vendorLayer
@@ -92,6 +60,7 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	ret := &scanner{
 		path:         p,
 		opts:         opts,
+		modRoots:     make(map[string]string),
 		vendorStack:  new(vendorStack),
 		vendorLayers: make(map[string]*vendorLayer),
 	}
@@ -119,6 +88,14 @@ func (s *scanner) skipDir(dir *scanDir) bool {
 		return true
 	}
 	return false
+}
+
+func (s *scanner) enterMod(p, vp string) {
+	s.modRoot, s.modVerRoot = p, vp
+}
+
+func (s *scanner) exitMod() {
+	s.modRoot, s.modVerRoot = "", ""
 }
 
 func (s *scanner) handleDir(dir *scanDir) error {
@@ -162,6 +139,11 @@ func (s *scanner) handleDir(dir *scanDir) error {
 		if !found {
 			return nil
 		}
+
+		pkg.ModRoot = s.modRoot
+		pkg.ModVerRoot = s.modVerRoot
+		modRel := pathutil.Relative(s.modRoot, dir.path)
+		pkg.ModVerPath = path.Join(s.modVerRoot, modRel)
 
 		importMap := make(map[string]string)
 		for _, imp := range pkg.Build.Imports {
@@ -208,17 +190,26 @@ func (s *scanner) walk(dir *scanDir) error {
 
 	sort.Strings(names)
 
-	if !s.vendorScanning {
-		index := sort.SearchStrings(names, "vendor")
-		hasVendor := index < len(names) && names[index] == "vendor"
-		if hasVendor {
-			ly := s.vendorLayers[dir.path]
-			if ly == nil {
-				panic(fmt.Sprintf("vendor layer missing: %s", dir.path))
-			}
-			if len(ly.pkgs) > 0 {
-				s.vendorStack.push(ly)
-				defer s.vendorStack.pop()
+	if !s.vendorScanning && findInSorted(names, "vendor") {
+		ly := s.vendorLayers[dir.path]
+		if ly == nil {
+			panic(fmt.Sprintf("vendor layer missing: %s", dir.path))
+		}
+		if len(ly.pkgs) > 0 {
+			s.vendorStack.push(ly)
+			defer s.vendorStack.pop()
+		}
+	}
+
+	if s.vendorScanning {
+		if s.modRoot == "" && findInSorted(names, "go.mod") {
+			p := filepath.Join(dir.dir, "go.mod")
+			modFile, err := parseModFile(p)
+			if err != nil {
+				log.Printf("parse %s: %s", p, err)
+			} else if isValidModPath(dir.path, modFile.name) {
+				s.enterMod(dir.path, modFile.name)
+				defer s.exitMod()
 			}
 		}
 	}

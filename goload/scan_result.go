@@ -7,10 +7,11 @@ import (
 // Package is a package in the scan result.
 type Package struct {
 	Build     *build.Package
-	ImportMap map[string]string
+	ImportMap map[string]string // import remapping due to vendoring
 
-	ModRoot string
-	ModPath string // alias import path when module is enabled
+	ModRoot    string // module root import path, not including version
+	ModVerRoot string // module root import path, including version
+	ModVerPath string // alias import path when module is enabled
 }
 
 // ScanResult has the scanning result
