@@ -81,8 +81,8 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	return ret
 }
 
-func (s *scanner) logError(dir string, err error) {
-	s.res.Errors = append(s.res.Errors, &scanError{
+func (s *scanner) warning(dir string, err error) {
+	s.res.Warnings = append(s.res.Warnings, &scanError{
 		dir: dir,
 		err: err,
 	})
@@ -131,7 +131,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 			if isNoGoError(err) {
 				return nil
 			}
-			s.logError(dir.path, fmt.Errorf("import error: %s", err))
+			s.warning(dir.path, fmt.Errorf("import error: %s", err))
 			return nil
 		}
 
@@ -217,7 +217,7 @@ func (s *scanner) walk(dir *scanDir) error {
 			p := filepath.Join(dir.dir, "go.mod")
 			modFile, err := parseModFile(p)
 			if err != nil {
-				s.logError(dir.path, fmt.Errorf("parse go.mod: %s", err))
+				s.warning(dir.path, fmt.Errorf("parse go.mod: %s", err))
 			} else if isValidModPath(dir.path, modFile.name) {
 				s.enterMod(dir.path, modFile.name)
 				defer s.exitMod()
