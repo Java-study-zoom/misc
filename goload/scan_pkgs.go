@@ -131,7 +131,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 			if isNoGoError(err) {
 				return nil
 			}
-			s.warning(dir.path, fmt.Errorf("import error: %s", err))
+			s.warning(dir.path, err)
 			return nil
 		}
 
