@@ -20,6 +20,7 @@ type ScanResult struct {
 	Pkgs        map[string]*Package
 	HasVendor   bool
 	HasInternal bool
+	Errors      []error
 }
 
 func newScanResult(repo string) *ScanResult {

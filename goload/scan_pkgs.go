@@ -3,7 +3,6 @@ package goload
 import (
 	"fmt"
 	"go/build"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,6 +32,15 @@ type ScanOptions struct {
 	// PkgBlackList is a list of packages that will be skipped. It will also
 	// skip its sub packages.
 	PkgBlackList map[string]bool
+}
+
+type scanError struct {
+	dir string
+	err error
+}
+
+func (err *scanError) Error() string {
+	return fmt.Sprintf("scan %q: %s", err.dir, err.err)
 }
 
 type scanner struct {
@@ -71,6 +79,13 @@ func newScanner(p string, opts *ScanOptions) *scanner {
 	ret.srcRoot = filepath.Join(ret.ctx.GOPATH, "src")
 
 	return ret
+}
+
+func (s *scanner) logError(dir string, err error) {
+	s.res.Errors = append(s.res.Errors, &scanError{
+		dir: dir,
+		err: err,
+	})
 }
 
 func (s *scanner) skipDir(dir *scanDir) bool {
@@ -116,7 +131,8 @@ func (s *scanner) handleDir(dir *scanDir) error {
 			if isNoGoError(err) {
 				return nil
 			}
-			return err
+			s.logError(dir.path, fmt.Errorf("import error: %s", err))
+			return nil
 		}
 
 		if len(pkg.GoFiles) == 0 && len(pkg.CgoFiles) == 0 {
@@ -127,9 +143,7 @@ func (s *scanner) handleDir(dir *scanDir) error {
 			dir.vendor.addPkg(dir.path)
 		}
 
-		s.res.Pkgs[dir.path] = &Package{
-			Build: pkg,
-		}
+		s.res.Pkgs[dir.path] = &Package{Build: pkg}
 	} else {
 		pkg, found := s.res.Pkgs[dir.path]
 		if !found {
@@ -167,7 +181,6 @@ func (s *scanner) walk(dir *scanDir) error {
 	if !info.IsDir() {
 		return nil
 	}
-
 	if s.skipDir(dir) {
 		return nil
 	}
@@ -204,7 +217,7 @@ func (s *scanner) walk(dir *scanDir) error {
 			p := filepath.Join(dir.dir, "go.mod")
 			modFile, err := parseModFile(p)
 			if err != nil {
-				log.Printf("parse %s: %s", p, err)
+				s.logError(dir.path, fmt.Errorf("parse go.mod: %s", err))
 			} else if isValidModPath(dir.path, modFile.name) {
 				s.enterMod(dir.path, modFile.name)
 				defer s.exitMod()
@@ -213,9 +226,6 @@ func (s *scanner) walk(dir *scanDir) error {
 	}
 
 	if err := s.handleDir(dir); err != nil {
-		if err == filepath.SkipDir {
-			return nil
-		}
 		return err
 	}
 
@@ -250,7 +260,7 @@ func ScanPkgs(p string, opts *ScanOptions) (*ScanResult, error) {
 
 	for _, scanning := range []bool{true, false} {
 		s.vendorScanning = scanning
-		if err := s.walk(dir); err != nil && err != filepath.SkipDir {
+		if err := s.walk(dir); err != nil {
 			return nil, err
 		}
 	}
