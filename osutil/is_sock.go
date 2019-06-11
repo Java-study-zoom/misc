@@ -14,5 +14,5 @@ func IsSock(path string) (bool, error) {
 		return false, err
 	}
 
-	return stat.Mode() & os.ModeSocket != 0, nil
+	return stat.Mode()&os.ModeSocket != 0, nil
 }
