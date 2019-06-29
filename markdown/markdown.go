@@ -19,8 +19,19 @@ func newPolicy() *bluemonday.Policy {
 	return p
 }
 
-// ToHTMLWithTitle parses the text that uses the first line as a title.
+
+// ToHTMLWithTitle parses the text that uses the first H1 as a title.
 func ToHTMLWithTitle(text []byte) (string, []byte) {
+	return toHTMLWithTitle(text, true)
+}
+
+// ToWildHTMLWithTitle parses the text taht uses the first H1 as a title.
+// It does not sanitize the HTML.
+func ToWildHTMLWithTitle(text []byte) (string, []byte) {
+	return toHTMLWithTitle(text, false)
+}
+
+func toHTMLWithTitle(text []byte, sanitize bool) (string, []byte) {
 	if len(text) == 0 {
 		return "", nil
 	}
@@ -35,17 +46,24 @@ func ToHTMLWithTitle(text []byte) (string, []byte) {
 	}
 
 	title := parseTitle(string(text[:pos]))
-	return title, ToHTML(text[pos:])
+	return title, toHTML(text[pos:], sanitize)
 }
 
-// ToHTML converts a markdown file to an HTML.
-func ToHTML(text []byte) []byte {
+func toHTML(text []byte, sanitize bool) []byte {
 	unsanitized := blackfriday.MarkdownCommon(text)
+	if !sanitize {
+		return unsanitized
+	}
 	sanitized := newPolicy().SanitizeBytes(unsanitized)
 	if len(sanitized) == 0 {
 		return nil
 	}
 	return sanitized
+}
+
+// ToHTML converts a markdown file to an HTML.
+func ToHTML(text []byte) []byte {
+	return toHTML(text, true)
 }
 
 func firstLine(text []byte) string {
