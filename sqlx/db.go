@@ -10,6 +10,14 @@ type DB struct {
 	*wrap
 }
 
+// OpenPsql opens a postgresql database.
+func OpenPsql(source string) (*DB, error) {
+	if source == "" {
+		return nil, nil
+	}
+	return Open("postgres", source)
+}
+
 // Open opens a database.
 func Open(driver, source string) (*DB, error) {
 	db, err := sql.Open(driver, source)

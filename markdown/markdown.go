@@ -19,7 +19,6 @@ func newPolicy() *bluemonday.Policy {
 	return p
 }
 
-
 // ToHTMLWithTitle parses the text that uses the first H1 as a title.
 func ToHTMLWithTitle(text []byte) (string, []byte) {
 	return toHTMLWithTitle(text, true)
