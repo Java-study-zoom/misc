@@ -62,6 +62,9 @@ func RSASignTime(k *rsa.PrivateKey) (*SignedRSABlock, error) {
 
 // Check checks if the timestamp is with in the time window.
 func (s *RSATimeSigner) Check(b *SignedRSABlock) error {
+	if len(b.Data) < 8 {
+		return fmt.Errorf("data too short to have a timestamp")
+	}
 	t := time.Unix(0, int64(binary.LittleEndian.Uint64(b.Data)))
 	timeNow := now(s.TimeFunc)
 	if !inWindow(t, timeNow, s.window) {
@@ -73,4 +76,13 @@ func (s *RSATimeSigner) Check(b *SignedRSABlock) error {
 		return fmt.Errorf("hash incorrect")
 	}
 	return rsa.VerifyPKCS1v15(s.k, crypto.SHA256, b.Hash, b.Sig)
+}
+
+// CheckRSATimeSignature checks if the signed RSA block is signed with the
+// given key, and with in the time window.
+func CheckRSATimeSignature(
+	b *SignedRSABlock, k *rsa.PublicKey, w time.Duration,
+) error {
+	s := NewRSATimeSigner(k, w)
+	return s.Check(b)
 }
