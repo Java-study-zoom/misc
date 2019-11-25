@@ -9,6 +9,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"time"
+
+	"shanhu.io/misc/rsautil"
 )
 
 // SignedRSABlock is a signed RSA block.
@@ -16,6 +18,8 @@ type SignedRSABlock struct {
 	Data []byte
 	Hash []byte
 	Sig  []byte
+
+	KeyID string `json:",omitempty"`
 }
 
 // RSATimeSigner signes the current time, or checks if a signed time
@@ -45,13 +49,18 @@ func rsaSignTime(k *rsa.PrivateKey, t time.Time) (*SignedRSABlock, error) {
 	hash := sha256.Sum256(buf)
 	sig, err := rsa.SignPKCS1v15(rand.Reader, k, crypto.SHA256, hash[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sign blob: %s", err)
+	}
+	keyHash, err := rsautil.PublicKeyHashString(&k.PublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("make key hash: %s", err)
 	}
 
 	return &SignedRSABlock{
-		Data: buf,
-		Hash: hash[:],
-		Sig:  sig,
+		Data:  buf,
+		Hash:  hash[:],
+		Sig:   sig,
+		KeyID: keyHash,
 	}, nil
 }
 
