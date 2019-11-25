@@ -7,8 +7,9 @@ import (
 
 // PublicKey carries a public key.
 type PublicKey struct {
-	key  *rsa.PublicKey
-	hash []byte
+	key     *rsa.PublicKey
+	hash    []byte
+	hashStr string
 }
 
 // NewPublicKey parses a new public key from SSH
@@ -22,10 +23,12 @@ func NewPublicKey(bs []byte) (*PublicKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	s := keyHashStr(h)
 
 	return &PublicKey{
-		key:  k,
-		hash: h,
+		key:     k,
+		hash:    h,
+		hashStr: s,
 	}, nil
 }
 
@@ -33,9 +36,7 @@ func NewPublicKey(bs []byte) (*PublicKey, error) {
 func (k *PublicKey) Key() *rsa.PublicKey { return k.key }
 
 // HashStr returns the base64 encoding of the key hash.
-func (k *PublicKey) HashStr() string {
-	return keyHashStr(k.hash)
-}
+func (k *PublicKey) HashStr() string { return k.hashStr }
 
 // ParsePublicKeys parses a list of public keys.
 func ParsePublicKeys(bs []byte) ([]*PublicKey, error) {
