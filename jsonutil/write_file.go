@@ -19,7 +19,7 @@ func WriteFile(file string, obj interface{}) error {
 // file.
 func WriteFileReadable(f string, v interface{}) error {
 	buf := new(bytes.Buffer)
-	bs, err := json.MarshalIndent(v, "", "    ")
+	bs, err := json.MarshalIndent(v, "", formatIndent)
 	if err != nil {
 		return err
 	}
