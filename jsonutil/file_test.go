@@ -24,7 +24,7 @@ const testWriteReadable = `{
   "Text": "be stronger"
 }`
 
-func TestReadNotExist(t *testing.T) {
+func TestReadFile_notExist(t *testing.T) {
 	const filename = "testdata/rumpelstilzchen"
 	obj := &struct{}{}
 	if err := ReadFile(filename, obj); err == nil {
@@ -40,7 +40,7 @@ func TestReadNotExist(t *testing.T) {
 	}
 }
 
-func TestReadNotJson(t *testing.T) {
+func TestReadFile_notJson(t *testing.T) {
 	const filename = "testdata/invalid.json"
 	obj := &struct{}{}
 	if err := ReadFile(filename, obj); err == nil {
@@ -51,7 +51,7 @@ func TestReadNotJson(t *testing.T) {
 	}
 }
 
-func TestRead(t *testing.T) {
+func TestReadFile(t *testing.T) {
 	data := new(testSturct)
 	const filename = "testdata/stronger.json"
 	if err := ReadFile(filename, data); err != nil {
@@ -68,7 +68,7 @@ func TestRead(t *testing.T) {
 	}
 }
 
-func TestWrite(t *testing.T) {
+func TestWriteFile(t *testing.T) {
 	f, err := ioutil.TempFile("", "jsonfile-test")
 	if err != nil {
 		t.Fatal(err)
@@ -90,7 +90,7 @@ func TestWrite(t *testing.T) {
 	}
 }
 
-func TestWriteReadable(t *testing.T) {
+func TestWriteFileReadable(t *testing.T) {
 	f, err := ioutil.TempFile("", "jsonfile-test")
 	if err != nil {
 		t.Fatal(err)
