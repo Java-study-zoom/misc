@@ -19,9 +19,9 @@ var testWriteData = &testSturct{
 }
 
 const testWriteReadable = `{
-    "Number": 0,
-    "Boolean": false,
-    "Text": "be stronger"
+  "Number": 0,
+  "Boolean": false,
+  "Text": "be stronger"
 }`
 
 func TestReadNotExist(t *testing.T) {
