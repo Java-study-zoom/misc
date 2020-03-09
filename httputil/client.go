@@ -40,15 +40,15 @@ func NewUnixClient(sockAddr string) *Client {
 	}
 }
 
-func (c *Client) addHeaders(req *http.Request) {
+func (c *Client) addHeaders(h http.Header) {
 	if c.Token != "" {
-		AddToken(req, c.Token)
+		headerSetAuthToken(h, c.Token)
 	}
 	if c.UserAgent != "" {
-		req.Header.Set("User-Agent", c.UserAgent)
+		h.Set("User-Agent", c.UserAgent)
 	}
 	if c.Accept != "" {
-		req.Header.Set("Accept", c.Accept)
+		h.Set("Accept", c.Accept)
 	}
 }
 
@@ -71,7 +71,7 @@ func (c *Client) req(m, p string, r io.Reader) (*http.Request, error) {
 		return nil, err
 	}
 
-	c.addHeaders(req)
+	c.addHeaders(req.Header)
 	return req, nil
 }
 

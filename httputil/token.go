@@ -6,5 +6,9 @@ import (
 
 // AddToken adds the authorization header into the request.
 func AddToken(req *http.Request, tok string) {
-	req.Header.Set("Authorization", "Bearer "+tok)
+	headerSetAuthToken(req.Header, tok)
+}
+
+func headerSetAuthToken(h http.Header, tok string) {
+	h.Set("Authorization", "Bearer "+tok)
 }
