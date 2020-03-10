@@ -21,7 +21,7 @@ type Client struct {
 }
 
 func (c *Client) addHeaders(h http.Header) {
-	headerSetAuthToken(h, c.Token)
+	SetAuthToken(h, c.Token)
 	setHeader(h, "User-Agent", c.UserAgent)
 	setHeader(h, "Accept", c.Accept)
 }
