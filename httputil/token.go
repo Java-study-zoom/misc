@@ -10,5 +10,8 @@ func AddToken(req *http.Request, tok string) {
 }
 
 func headerSetAuthToken(h http.Header, tok string) {
+	if tok == "" {
+		return
+	}
 	h.Set("Authorization", "Bearer "+tok)
 }

@@ -6,11 +6,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 // Client performs client that calls to a remote server with an optional token.
 type Client struct {
-	Server string
+	Server *url.URL
 	Token  string // Optional token to be put in the Bearer HTTP header.
 
 	UserAgent string // Optional User-Agent for each request.
@@ -20,36 +21,37 @@ type Client struct {
 }
 
 // NewClient creates a new client.
-func NewClient(s string) *Client {
-	return &Client{Server: s}
+func NewClient(s string) (*Client, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{Server: u}, nil
 }
 
 // NewTokenClient creates a new client with a Bearer token.
-func NewTokenClient(s, tok string) *Client {
-	return &Client{Server: s, Token: tok}
+func NewTokenClient(s, tok string) (*Client, error) {
+	c, err := NewClient(s)
+	if err != nil {
+		return nil, err
+	}
+	c.Token = tok
+	return c, nil
 }
 
 // NewUnixClient creates a new client that always goes to a particular
 // unix domain socket.
 func NewUnixClient(sockAddr string) *Client {
 	return &Client{
-		Server: "http://unix.sock",
-		Transport: &http.Transport{
-			DialContext: unixSockSink(sockAddr),
-		},
+		Server:    &url.URL{Scheme: "http", Host: "unix.sock"},
+		Transport: unixSockTransport(sockAddr),
 	}
 }
 
 func (c *Client) addHeaders(h http.Header) {
-	if c.Token != "" {
-		headerSetAuthToken(h, c.Token)
-	}
-	if c.UserAgent != "" {
-		h.Set("User-Agent", c.UserAgent)
-	}
-	if c.Accept != "" {
-		h.Set("Accept", c.Accept)
-	}
+	headerSetAuthToken(h, c.Token)
+	setHeader(h, "User-Agent", c.UserAgent)
+	setHeader(h, "Accept", c.Accept)
 }
 
 func (c *Client) makeClient() *http.Client {
@@ -162,17 +164,14 @@ func (c *Client) Get(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	resp, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-
 	if !isSuccess(resp) {
 		defer resp.Body.Close()
 		return nil, RespError(resp)
 	}
-
 	return resp, nil
 }
 
@@ -214,15 +213,12 @@ func (c *Client) JSONGet(p string, resp interface{}) error {
 
 func copyRespBody(resp *http.Response, w io.Writer) error {
 	defer resp.Body.Close()
-
 	if !isSuccess(resp) {
 		return RespError(resp)
 	}
-
 	if w == nil {
 		return nil
 	}
-
 	if _, err := io.Copy(w, resp.Body); err != nil {
 		return err
 	}
@@ -278,7 +274,6 @@ func (c *Client) JSONCall(p string, req, resp interface{}) error {
 	if !isSuccess(httpResp) {
 		return RespError(httpResp)
 	}
-
 	if resp == nil {
 		return nil
 	}

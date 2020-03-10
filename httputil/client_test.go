@@ -8,7 +8,10 @@ import (
 
 func TestClientGetCode(t *testing.T) {
 	s := newHelloServer()
-	c := NewClient(s.URL)
+	c, err := NewClient(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
 	got, err := c.GetCode("/")
 	if err != nil {
 		t.Fatal(err)
@@ -28,7 +31,10 @@ func TestClientGetCode(t *testing.T) {
 
 func TestClientGet(t *testing.T) {
 	s := newHelloServer()
-	c := NewClient(s.URL)
+	c, err := NewClient(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
 	resp, err := c.Get("/")
 	if err != nil {
 		t.Fatal(err)

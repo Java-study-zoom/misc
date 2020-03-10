@@ -5,12 +5,8 @@ import (
 	"path"
 )
 
-func makeURL(server, p string) (string, error) {
-	u, err := url.Parse(server)
-	if err != nil {
-		return "", err
-	}
-
+func makeURL(base *url.URL, p string) (string, error) {
+	u := *base
 	up, err := url.Parse(p)
 	if err != nil {
 		return "", err
