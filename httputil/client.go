@@ -20,34 +20,6 @@ type Client struct {
 	Transport http.RoundTripper
 }
 
-// NewClient creates a new client.
-func NewClient(s string) (*Client, error) {
-	u, err := url.Parse(s)
-	if err != nil {
-		return nil, err
-	}
-	return &Client{Server: u}, nil
-}
-
-// NewTokenClient creates a new client with a Bearer token.
-func NewTokenClient(s, tok string) (*Client, error) {
-	c, err := NewClient(s)
-	if err != nil {
-		return nil, err
-	}
-	c.Token = tok
-	return c, nil
-}
-
-// NewUnixClient creates a new client that always goes to a particular
-// unix domain socket.
-func NewUnixClient(sockAddr string) *Client {
-	return &Client{
-		Server:    &url.URL{Scheme: "http", Host: "unix.sock"},
-		Transport: unixSockTransport(sockAddr),
-	}
-}
-
 func (c *Client) addHeaders(h http.Header) {
 	headerSetAuthToken(h, c.Token)
 	setHeader(h, "User-Agent", c.UserAgent)
