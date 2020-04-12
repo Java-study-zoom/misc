@@ -2,6 +2,8 @@ package sqlx
 
 import (
 	"fmt"
+
+	"shanhu.io/misc/errcode"
 )
 
 type queryError struct {
@@ -19,5 +21,6 @@ func Error(q string, err error) error {
 	if err == nil {
 		return nil
 	}
-	return &queryError{q, err}
+	qerr := &queryError{q: q, err: err}
+	return errcode.Add(errcode.Internal, qerr)
 }
