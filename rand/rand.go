@@ -38,9 +38,7 @@ func HexBytes(n int) string {
 
 // Letters returns a random ID of n random letters.
 func Letters(n int) string {
-	seed := int64(binary.LittleEndian.Uint64(Bytes(8)))
-	src := mrand.NewSource(seed)
-	r := mrand.New(src)
+	r := New()
 	var ret bytes.Buffer
 
 	for i := 0; i < n; i++ {
@@ -52,4 +50,11 @@ func Letters(n int) string {
 		}
 	}
 	return ret.String()
+}
+
+// New returns a new math/rand.Rand that is seeded with crypto rand.
+func New() *mrand.Rand {
+	seed := int64(binary.LittleEndian.Uint64(Bytes(8)))
+	src := mrand.NewSource(seed)
+	return mrand.New(src)
 }
