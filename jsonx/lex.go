@@ -1,6 +1,8 @@
 package jsonx
 
 import (
+	"io"
+
 	"shanhu.io/smlvm/lexing"
 )
 
@@ -50,4 +52,15 @@ func lexJSONX(x *lexing.Lexer) *lexing.Token {
 
 	x.CodeErrorf("jsonx.illegalChar", "illegal char %q", r)
 	return x.MakeToken(lexing.Illegal)
+}
+
+var keywords = lexing.KeywordSet("true", "false")
+
+func tokener(f string, r io.Reader) lexing.Tokener {
+	x := lexing.MakeLexer(f, r, lexJSONX)
+	kw := lexing.NewKeyworder(x)
+	kw.Ident = tokIdent
+	kw.Keyword = tokKeyword
+	kw.Keywords = keywords
+	return kw
 }
