@@ -256,6 +256,11 @@ func (c *Client) JSONCall(p string, req, resp interface{}) error {
 	return httpResp.Body.Close()
 }
 
+// Call is an alias to JSONCall.
+func (c *Client) Call(p string, req, resp interface{}) error {
+	return c.JSONCall(p, req, resp)
+}
+
 // Delete sends a delete message to the particular path.
 func (c *Client) Delete(p string) error {
 	return c.poke("DELETE", p)
