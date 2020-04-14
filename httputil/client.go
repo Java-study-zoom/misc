@@ -17,7 +17,7 @@ type Client struct {
 	UserAgent string // Optional User-Agent for each request.
 	Accept    string // Optional Accept header.
 
-	Transport *http.Transport
+	Transport http.RoundTripper
 }
 
 func (c *Client) addHeaders(h http.Header) {
@@ -27,11 +27,7 @@ func (c *Client) addHeaders(h http.Header) {
 }
 
 func (c *Client) makeClient() *http.Client {
-	client := &http.Client{}
-	if c.Transport != nil {
-		client.Transport = c.Transport
-	}
-	return client
+	return &http.Client{Transport: c.Transport}
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
