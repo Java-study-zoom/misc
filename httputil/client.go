@@ -157,6 +157,17 @@ func (c *Client) GetString(p string) (string, error) {
 	return respString(resp)
 }
 
+// GetInto gets the specified path and writes everything from the body to the
+// given writer.
+func (c *Client) GetInto(p string, w io.Writer) (int64, error) {
+	resp, err := c.Get(p)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	return io.Copy(w, resp.Body)
+}
+
 // GetBytes gets the byte array from a route on the server.
 func (c *Client) GetBytes(p string) ([]byte, error) {
 	resp, err := c.Get(p)
