@@ -30,8 +30,20 @@ func (c *Client) makeClient() *http.Client {
 	return &http.Client{Transport: c.Transport}
 }
 
-func (c *Client) do(req *http.Request) (*http.Response, error) {
+func (c *Client) doRaw(req *http.Request) (*http.Response, error) {
 	return c.makeClient().Do(req)
+}
+
+func (c *Client) do(req *http.Request) (*http.Response, error) {
+	resp, err := c.doRaw(req)
+	if err != nil {
+		return nil, err
+	}
+	if !isSuccess(resp) {
+		defer resp.Body.Close()
+		return nil, RespError(resp)
+	}
+	return resp, nil
 }
 
 func (c *Client) req(m, p string, r io.Reader) (*http.Request, error) {
@@ -69,11 +81,6 @@ func (c *Client) Put(p string, r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-
-	if !isSuccess(resp) {
-		return RespError(resp)
-	}
 	return resp.Body.Close()
 }
 
@@ -101,12 +108,7 @@ func (c *Client) poke(m, p string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-
-	if !isSuccess(resp) {
-		return RespError(resp)
-	}
-	return nil
+	return resp.Body.Close()
 }
 
 // GetCode gets a response from a route and returns the
@@ -116,7 +118,7 @@ func (c *Client) GetCode(p string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	resp, err := c.do(req)
+	resp, err := c.doRaw(req)
 	if err != nil {
 		return 0, err
 	}
@@ -136,15 +138,7 @@ func (c *Client) Get(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.do(req)
-	if err != nil {
-		return nil, err
-	}
-	if !isSuccess(resp) {
-		defer resp.Body.Close()
-		return nil, RespError(resp)
-	}
-	return resp, nil
+	return c.do(req)
 }
 
 // GetString gets the string response from a route on the server.
@@ -196,9 +190,6 @@ func (c *Client) JSONGet(p string, resp interface{}) error {
 
 func copyRespBody(resp *http.Response, w io.Writer) error {
 	defer resp.Body.Close()
-	if !isSuccess(resp) {
-		return RespError(resp)
-	}
 	if w == nil {
 		return nil
 	}
@@ -254,9 +245,6 @@ func (c *Client) JSONCall(p string, req, resp interface{}) error {
 	}
 	defer httpResp.Body.Close()
 
-	if !isSuccess(httpResp) {
-		return RespError(httpResp)
-	}
 	if resp == nil {
 		return nil
 	}
