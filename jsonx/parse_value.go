@@ -1,11 +1,54 @@
 package jsonx
 
 func parseObjectEntries(p *parser) []*objectEntry {
-	panic("todo")
+	var entries []*objectEntry
+	for !p.seeOp("}") {
+		if !(p.See(tokIdent) || p.See(tokString)) {
+			p.CodeErrorfHere("jsonx.expectObjectEntry", "expect object entry")
+			break
+		}
+
+		k := p.Shift()
+		colon := p.expectOp(":")
+		v := parseValue(p)
+		entry := &objectEntry{
+			key:   k,
+			colon: colon,
+			value: v,
+		}
+
+		if p.seeOp(",") {
+			entry.comma = p.Shift()
+		} else if !p.seeOp("}") {
+			p.expectOp(",")
+		}
+		entries = append(entries, entry)
+
+		if p.InError() {
+			break
+		}
+	}
+
+	return entries
 }
 
-func parseListEntries(p *parser) []value {
-	panic("todo")
+func parseListEntries(p *parser) []*listEntry {
+	var entries []*listEntry
+	for !p.seeOp("]") {
+		v := parseValue(p)
+		entry := &listEntry{value: v}
+		if p.seeOp(",") {
+			entry.comma = p.Shift()
+		} else if !p.seeOp("]") {
+			p.expectOp(",")
+		}
+		entries = append(entries, entry)
+		if p.InError() {
+			break
+		}
+	}
+
+	return entries
 }
 
 func parseValue(p *parser) value {
