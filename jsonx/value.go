@@ -4,25 +4,26 @@ import (
 	"shanhu.io/smlvm/lexing"
 )
 
-type object struct {
-	left  *lexing.Token
-	right *lexing.Token
+type value interface{}
 
+type object struct {
+	left    *lexing.Token
 	entries []*objectEntry
+	right   *lexing.Token
 }
 
-type value struct {
+type basic struct {
 	lead  *lexing.Token
 	token *lexing.Token
 }
 
 type objectEntry struct {
 	key   *lexing.Token
-	value interface{}
+	value value
 }
 
 type list struct {
 	left    *lexing.Token
+	entries []value
 	right   *lexing.Token
-	entires []interface{}
 }
