@@ -8,11 +8,11 @@ func parseObjectEntries(p *parser) []*objectEntry {
 			break
 		}
 
-		k := p.Shift()
+		key := &objectKey{token: p.Shift()}
 		colon := p.expectOp(":")
 		v := parseValue(p)
 		entry := &objectEntry{
-			key:   k,
+			key:   key,
 			colon: colon,
 			value: v,
 		}
@@ -52,8 +52,34 @@ func parseListEntries(p *parser) []*listEntry {
 }
 
 func parseValue(p *parser) value {
+	if p.See(tokKeyword) {
+		kw := p.Shift()
+		if kw.Lit == "true" || kw.Lit == "false" {
+			return &boolean{keyword: kw}
+		}
+		p.CodeErrorf(
+			kw.Pos, "jsonx.unexpectedKeyword",
+			"unexpected keyword '%s'", kw.Lit,
+		)
+		return nil
+	}
 	if p.See(tokString) || p.See(tokInt) || p.See(tokFloat) {
 		return &basic{token: p.Shift()}
+	}
+	if p.seeOp("+", "-") {
+		lead := p.Shift()
+		if p.See(tokInt) || p.See(tokFloat) {
+			return &basic{
+				lead:  lead,
+				token: p.Shift(),
+			}
+		}
+		t := p.Token()
+		p.CodeErrorf(
+			t.Pos, "jsonx.expectNumber",
+			"expect number, got %s", tokenTypeStr(t),
+		)
+		return nil
 	}
 	if p.seeOp("{") {
 		left := p.Shift()

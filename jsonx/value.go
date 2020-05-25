@@ -9,6 +9,11 @@ type value interface{}
 type basic struct {
 	lead  *lexing.Token
 	token *lexing.Token
+	value interface{}
+}
+
+type boolean struct {
+	keyword *lexing.Token
 }
 
 type object struct {
@@ -17,8 +22,13 @@ type object struct {
 	right   *lexing.Token
 }
 
+type objectKey struct {
+	token *lexing.Token
+	value interface{}
+}
+
 type objectEntry struct {
-	key   *lexing.Token
+	key   *objectKey
 	colon *lexing.Token
 	value value
 	comma *lexing.Token
