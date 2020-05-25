@@ -1,5 +1,33 @@
 package jsonx
 
+import (
+	"strconv"
+
+	"shanhu.io/smlvm/lexing"
+)
+
+func parseStringValue(p *parser, t *lexing.Token) string {
+	v, err := strconv.Unquote(t.Lit)
+	if err != nil {
+		p.CodeErrorf(
+			t.Pos, "jsonx.stringLit", "invalid string: %s", err.Error(),
+		)
+		return ""
+	}
+	return v
+}
+
+func parseFloatValue(p *parser, t *lexing.Token) float64 {
+	v, err := strconv.ParseFloat(t.Lit, 64)
+	if err != nil {
+		p.CodeErrorf(
+			t.Pos, "jsonx.floatLit", "invalid float: %s", err.Error(),
+		)
+		return 0
+	}
+	return v
+}
+
 func parseObjectEntries(p *parser) []*objectEntry {
 	var entries []*objectEntry
 	for !p.seeOp("}") {
@@ -9,6 +37,9 @@ func parseObjectEntries(p *parser) []*objectEntry {
 		}
 
 		key := &objectKey{token: p.Shift()}
+		if key.token.Type == tokString {
+			key.value = parseStringValue(p, key.token)
+		}
 		colon := p.expectOp(":")
 		v := parseValue(p)
 		entry := &objectEntry{
@@ -52,7 +83,8 @@ func parseListEntries(p *parser) []*listEntry {
 }
 
 func parseValue(p *parser) value {
-	if p.See(tokKeyword) {
+	switch {
+	case p.See(tokKeyword):
 		kw := p.Shift()
 		if kw.Lit == "true" || kw.Lit == "false" {
 			return &boolean{keyword: kw}
@@ -62,11 +94,17 @@ func parseValue(p *parser) value {
 			"unexpected keyword '%s'", kw.Lit,
 		)
 		return nil
-	}
-	if p.See(tokString) || p.See(tokInt) || p.See(tokFloat) {
+	case p.See(tokString):
+		tok := p.Shift()
+		return &basic{
+			token: tok,
+			value: parseStringValue(p, tok),
+		}
+	case p.See(tokInt):
 		return &basic{token: p.Shift()}
-	}
-	if p.seeOp("+", "-") {
+	case p.See(tokFloat):
+		return &basic{token: p.Shift()}
+	case p.seeOp("+", "-"):
 		lead := p.Shift()
 		if p.See(tokInt) || p.See(tokFloat) {
 			return &basic{
@@ -80,8 +118,7 @@ func parseValue(p *parser) value {
 			"expect number, got %s", tokenTypeStr(t),
 		)
 		return nil
-	}
-	if p.seeOp("{") {
+	case p.seeOp("{"):
 		left := p.Shift()
 		entries := parseObjectEntries(p)
 		right := p.expectOp("}")
@@ -90,8 +127,7 @@ func parseValue(p *parser) value {
 			entries: entries,
 			right:   right,
 		}
-	}
-	if p.seeOp("[") {
+	case p.seeOp("["):
 		left := p.Shift()
 		entries := parseListEntries(p)
 		right := p.expectOp("]")
@@ -100,12 +136,21 @@ func parseValue(p *parser) value {
 			entries: entries,
 			right:   right,
 		}
+	default:
+		t := p.Token()
+		p.CodeErrorf(
+			t.Pos, "jsonx.expectOperand",
+			"expect an operand, got %s", typeStr(t.Type),
+		)
+		return nil
 	}
+}
 
-	t := p.Token()
-	p.CodeErrorf(
-		t.Pos, "jsonx.expectOperand",
-		"expect an operand, got %s", typeStr(t.Type),
-	)
-	return nil
+func parseTrunk(p *parser) *trunk {
+	v := parseValue(p)
+	semi := p.Expect(tokSemi)
+	return &trunk{
+		value: v,
+		semi:  semi,
+	}
 }

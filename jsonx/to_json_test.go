@@ -15,7 +15,15 @@ func TestToJSON(t *testing.T) {
 		{`{bool:false}`, `{"bool":false}`},
 		{`{a:42,b:true}`, `{"a":42,"b":true}`},
 		{`{a:42,}`, `{"a":42}`},
-		// {"{a:42,\n}", `{"a":42}`},
+		{`{a:-42}`, `{"a":-42}`},
+		{`{a:+42}`, `{"a":42}`},
+		{`"string"`, `"string"`},
+		{"`string\n`", `"string\n"`},
+		{"{a:42,\n}", `{"a":42}`},
+		{"{a:{a:{a:42}}}", `{"a":{"a":{"a":42}}}`},
+		{"{\na:42,\n}", `{"a":42}`},
+		{"42 // comment", "42"},
+		{"{a:/*a*/42}", `{"a":42}`},
 	} {
 		bs, errs := ToJSON([]byte(test.in))
 		if errs != nil {

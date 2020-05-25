@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+
+	"shanhu.io/misc/errcode"
 )
 
 func writeString(w io.Writer, s string) error {
@@ -115,6 +117,12 @@ func encodeValue(w io.Writer, v value) error {
 		if err := encodeList(w, v); err != nil {
 			return err
 		}
+	default:
+		return errcode.Internalf("invalid type: %T", v)
 	}
 	return nil
+}
+
+func encodeTrunk(w io.Writer, t *trunk) error {
+	return encodeValue(w, t.value)
 }

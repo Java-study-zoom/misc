@@ -10,6 +10,11 @@ func lexOperator(x *lexing.Lexer, r rune) *lexing.Token {
 	switch r {
 	case '{', '}', '[', ']', ',', ':', '+', '-':
 		/* do nothing */
+	case '/':
+		r2 := x.Rune()
+		if r2 == '/' || r2 == '*' {
+			return lexing.LexComment(x)
+		}
 	default:
 		return nil
 	}
@@ -30,11 +35,6 @@ func lexJSONX(x *lexing.Lexer) *lexing.Token {
 		return lexing.LexString(x, tokString, '"')
 	case '`':
 		return lexing.LexRawString(x, tokString)
-	case '/':
-		r2 := x.Rune()
-		if r2 == '/' || r2 == '*' {
-			return lexing.LexComment(x)
-		}
 	}
 
 	if lexing.IsDigit(r) {
@@ -58,7 +58,8 @@ var keywords = lexing.KeywordSet("true", "false")
 
 func tokener(f string, r io.Reader) lexing.Tokener {
 	x := lexing.MakeLexer(f, r, lexJSONX)
-	kw := lexing.NewKeyworder(x)
+	si := newSemiInserter(x)
+	kw := lexing.NewKeyworder(si)
 	kw.Ident = tokIdent
 	kw.Keyword = tokKeyword
 	kw.Keywords = keywords

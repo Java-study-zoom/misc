@@ -11,6 +11,7 @@ const (
 	tokInt
 	tokFloat
 	tokOperator
+	tokSemi
 	tokEndl
 )
 
@@ -27,6 +28,7 @@ var tokTypes = func() *lexing.Types {
 		{tokFloat, "float"},
 		{tokOperator, "operator"},
 		{tokEndl, "end-line"},
+		{tokSemi, "end-line"},
 	} {
 		t.Register(e.t, e.name)
 	}

@@ -44,3 +44,8 @@ type listEntry struct {
 	value value
 	comma *lexing.Token
 }
+
+type trunk struct {
+	value value
+	semi  *lexing.Token
+}
