@@ -2,9 +2,9 @@ package jsonx
 
 import (
 	"testing"
-	
-	"strings"
+
 	"reflect"
+	"strings"
 )
 
 func TestDecoder(t *testing.T) {
@@ -19,9 +19,19 @@ func TestDecoder(t *testing.T) {
 		}
 		got = append(got, s)
 	}
-	
+
 	want := []string{"a", "b", "c"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestUnmarshal(t *testing.T) {
+	var v int
+	if err := Unmarshal([]byte("1234"), &v); err != nil {
+		t.Fatal(err)
+	}
+	if v != 1234 {
+		t.Errorf("got %d, want 1234", v)
 	}
 }

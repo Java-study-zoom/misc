@@ -47,7 +47,7 @@ type listEntry struct {
 
 type identList struct {
 	entries []*lexing.Token
-	dots []*lexing.Token
+	dots    []*lexing.Token
 }
 
 type trunk struct {
