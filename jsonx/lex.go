@@ -8,13 +8,15 @@ import (
 
 func lexOperator(x *lexing.Lexer, r rune) *lexing.Token {
 	switch r {
-	case '{', '}', '[', ']', ',', ':', '+', '-':
+	case '{', '}', '[', ']', ',', ':', '+', '-', '.':
 		/* do nothing */
 	case '/':
 		r2 := x.Rune()
 		if r2 == '/' || r2 == '*' {
 			return lexing.LexComment(x)
 		}
+	case ';':
+		return x.MakeToken(tokSemi)
 	default:
 		return nil
 	}

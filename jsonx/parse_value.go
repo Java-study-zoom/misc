@@ -82,6 +82,22 @@ func parseListEntries(p *parser) []*listEntry {
 	return entries
 }
 
+func parseIdentList(p *parser) *identList {
+	lst := new(identList)
+	for {
+		tok := p.Expect(tokIdent)
+		if tok == nil {
+			return lst
+		}
+		lst.entries = append(lst.entries, tok)
+		if !p.seeOp(".") {
+			break
+		}
+		lst.dots = append(lst.dots, p.Shift())
+	}
+	return lst
+}
+
 func parseValue(p *parser) value {
 	switch {
 	case p.See(tokKeyword):
@@ -103,7 +119,11 @@ func parseValue(p *parser) value {
 	case p.See(tokInt):
 		return &basic{token: p.Shift()}
 	case p.See(tokFloat):
-		return &basic{token: p.Shift()}
+		tok := p.Shift()
+		return &basic{
+			token: tok,
+			value: parseFloatValue(p, tok),
+		}
 	case p.seeOp("+", "-"):
 		lead := p.Shift()
 		if p.See(tokInt) || p.See(tokFloat) {
@@ -136,6 +156,8 @@ func parseValue(p *parser) value {
 			entries: entries,
 			right:   right,
 		}
+	case p.See(tokIdent):
+		return parseIdentList(p)
 	default:
 		t := p.Token()
 		p.CodeErrorf(
@@ -147,10 +169,11 @@ func parseValue(p *parser) value {
 }
 
 func parseTrunk(p *parser) *trunk {
-	v := parseValue(p)
-	semi := p.Expect(tokSemi)
-	return &trunk{
-		value: v,
-		semi:  semi,
+	t := &trunk{}
+	for !p.See(tokSemi) {
+		v := parseValue(p)
+		t.values = append(t.values, v)
 	}
+	t.semi = p.Expect(tokSemi)
+	return t
 }

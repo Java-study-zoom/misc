@@ -202,7 +202,10 @@ func copyRespBody(resp *http.Response, w io.Writer) error {
 // Post posts with request body from r, and copies the response body
 // to w.
 func (c *Client) Post(p string, r io.Reader, w io.Writer) error {
-	req, err := c.req("POST", p, ioutil.NopCloser(r))
+	if r != nil {
+		r = ioutil.NopCloser(r)
+	}
+	req, err := c.req("POST", p, r)
 	if err != nil {
 		return err
 	}

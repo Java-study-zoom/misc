@@ -73,10 +73,7 @@ func encodeObject(w io.Writer, v *object) error {
 			return err
 		}
 	}
-	if err := writeString(w, "}"); err != nil {
-		return err
-	}
-	return nil
+	return writeString(w, "}")
 }
 
 func encodeList(w io.Writer, v *list) error {
@@ -93,10 +90,24 @@ func encodeList(w io.Writer, v *list) error {
 			return err
 		}
 	}
-	if err := writeString(w, "]"); err != nil {
+	return writeString(w, "]")
+}
+
+func encodeIdentList(w io.Writer, v *identList) error {
+	if err := writeString(w, "["); err != nil {
 		return err
 	}
-	return nil
+	for i, entry := range v.entries {
+		if i > 0 {
+			if err := writeString(w, ","); err != nil {
+				return err
+			}
+		}
+		if err := encodeJSON(w, entry.Lit); err != nil {
+			return err
+		}
+	}
+	return writeString(w, "]")
 }
 
 func encodeValue(w io.Writer, v value) error {
@@ -117,6 +128,10 @@ func encodeValue(w io.Writer, v value) error {
 		if err := encodeList(w, v); err != nil {
 			return err
 		}
+	case *identList:
+		if err := encodeIdentList(w, v); err != nil {
+			return err
+		}
 	default:
 		return errcode.Internalf("invalid type: %T", v)
 	}
@@ -124,5 +139,13 @@ func encodeValue(w io.Writer, v value) error {
 }
 
 func encodeTrunk(w io.Writer, t *trunk) error {
-	return encodeValue(w, t.value)
+	for _, v := range t.values {
+		if err := encodeValue(w, v); err != nil {
+			return err
+		}
+		if err := writeString(w, "\n"); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -45,7 +45,12 @@ type listEntry struct {
 	comma *lexing.Token
 }
 
+type identList struct {
+	entries []*lexing.Token
+	dots []*lexing.Token
+}
+
 type trunk struct {
-	value value
-	semi  *lexing.Token
+	values []value
+	semi   *lexing.Token
 }
