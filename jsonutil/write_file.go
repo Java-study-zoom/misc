@@ -26,5 +26,5 @@ func WriteFileReadable(f string, v interface{}) error {
 	buf.Write(bs)
 	buf.Write([]byte("\n"))
 
-	return ioutil.WriteFile(f, bs, 0644)
+	return ioutil.WriteFile(f, buf.Bytes(), 0644)
 }

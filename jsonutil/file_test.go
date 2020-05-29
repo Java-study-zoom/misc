@@ -22,7 +22,8 @@ const testWriteReadable = `{
   "Number": 0,
   "Boolean": false,
   "Text": "be stronger"
-}`
+}
+`
 
 func TestReadFile_notExist(t *testing.T) {
 	const filename = "testdata/rumpelstilzchen"
