@@ -24,6 +24,7 @@ func TestToJSON(t *testing.T) {
 		{"{\na:42,\n}", `{"a":42}`},
 		{"42 // comment", "42"},
 		{"{a:/*a*/42}", `{"a":42}`},
+		{`{"a":"a","b":"b"}`, `{"a":"a","b":"b"}`},
 		{"a.b.c.d", `["a","b","c","d"]`},
 	} {
 		bs, errs := ToJSON([]byte(test.in))
