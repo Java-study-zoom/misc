@@ -18,6 +18,14 @@ func OpenPsql(source string) (*DB, error) {
 	return Open("postgres", source)
 }
 
+// OpenSqlite3 opens a sqlite3 database.
+func OpenSqlite3(file string) (*DB, error) {
+	if file == "" {
+		return nil, nil
+	}
+	return Open("sqlite3", file)
+}
+
 // Open opens a database.
 func Open(driver, source string) (*DB, error) {
 	db, err := sql.Open(driver, source)
