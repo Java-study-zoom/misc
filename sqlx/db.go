@@ -8,14 +8,22 @@ import (
 type DB struct {
 	*sql.DB
 	*wrap
+
+	driver string
 }
+
+// Driver names.
+const (
+	Psql    = "postgres"
+	Sqlite3 = "sqlite3"
+)
 
 // OpenPsql opens a postgresql database.
 func OpenPsql(source string) (*DB, error) {
 	if source == "" {
 		return nil, nil
 	}
-	return Open("postgres", source)
+	return Open(Psql, source)
 }
 
 // OpenSqlite3 opens a sqlite3 database.
@@ -23,7 +31,7 @@ func OpenSqlite3(file string) (*DB, error) {
 	if file == "" {
 		return nil, nil
 	}
-	return Open("sqlite3", file)
+	return Open(Sqlite3, file)
 }
 
 // Open opens a database.
@@ -33,9 +41,15 @@ func Open(driver, source string) (*DB, error) {
 		return nil, err
 	}
 	return &DB{
-		DB:   db,
-		wrap: &wrap{conn: db},
+		DB:     db,
+		wrap:   &wrap{conn: db},
+		driver: driver,
 	}, nil
+}
+
+// Driver returns the driver name when the database is being opened.
+func (db *DB) Driver() string {
+	return db.driver
 }
 
 // Begin begins a transaction.
