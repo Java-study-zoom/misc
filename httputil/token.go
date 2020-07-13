@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"context"
 	"net/http"
 )
 
@@ -10,4 +11,10 @@ func SetAuthToken(h http.Header, tok string) {
 		return
 	}
 	h.Set("Authorization", "Bearer "+tok)
+}
+
+// TokenSource is an interface that can provides a bearer token for
+// authentication.
+type TokenSource interface {
+	Token(ctx context.Context) (string, error)
 }
