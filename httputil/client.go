@@ -12,7 +12,12 @@ import (
 // Client performs client that calls to a remote server with an optional token.
 type Client struct {
 	Server *url.URL
-	Token  string // Optional token to be put in the Bearer HTTP header.
+
+	// TokenSource is an optional token source to proivde bearer token.
+	TokenSource TokenSource
+	// Token is the optional token to use a bearer token, used only when
+	// TokenSource is nil.
+	Token string
 
 	UserAgent string // Optional User-Agent for each request.
 	Accept    string // Optional Accept header.
@@ -20,8 +25,21 @@ type Client struct {
 	Transport http.RoundTripper
 }
 
+func (c *Client) addAuth(req *http.Request) error {
+	if c.TokenSource != nil {
+		ctx := req.Context()
+		tok, err := c.TokenSource.Token(ctx)
+		if err != nil {
+			return err
+		}
+		SetAuthToken(req.Header, tok)
+		return nil
+	}
+	SetAuthToken(req.Header, c.Token)
+	return nil
+}
+
 func (c *Client) addHeaders(h http.Header) {
-	SetAuthToken(h, c.Token)
 	setHeader(h, "User-Agent", c.UserAgent)
 	setHeader(h, "Accept", c.Accept)
 }
@@ -56,7 +74,9 @@ func (c *Client) req(m, p string, r io.Reader) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if err := c.addAuth(req); err != nil {
+		return nil, err
+	}
 	c.addHeaders(req.Header)
 	return req, nil
 }
