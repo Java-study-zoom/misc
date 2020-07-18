@@ -26,11 +26,15 @@ func NewSessions(key []byte, ttl time.Duration) *Sessions {
 }
 
 // New creates a new session with some data.
-func (s *Sessions) New(data []byte) (string, time.Time) {
+func (s *Sessions) New(data []byte, ttl time.Duration) (string, time.Time) {
 	buf := new(bytes.Buffer)
 
+	if ttl <= 0 || ttl > s.ttl {
+		ttl = s.ttl
+	}
+
 	// write the timestamp
-	expires := now(s.TimeFunc).Add(s.ttl)
+	expires := now(s.TimeFunc).Add(ttl)
 	ts := make([]byte, timestampLen)
 	binary.LittleEndian.PutUint64(ts, uint64(expires.UnixNano()))
 	buf.Write(ts)
@@ -50,7 +54,7 @@ func (s *Sessions) NewJSON(data interface{}) (string, time.Time, error) {
 		return "", t, err
 	}
 
-	ret, expires := s.New(bs)
+	ret, expires := s.New(bs, 0)
 	return ret, expires, nil
 }
 
@@ -88,7 +92,7 @@ func (s *Sessions) CheckJSON(session string, dat interface{}) bool {
 
 // NewState creates a new state, which is a session with no data.
 func (s *Sessions) NewState() string {
-	ret, _ := s.New(nil)
+	ret, _ := s.New(nil, 0)
 	return ret
 }
 
