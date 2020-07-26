@@ -92,7 +92,7 @@ func (c *Client) reqJSON(m, p string, r io.Reader) (*http.Request, error) {
 
 // Put puts a stream to a path on the server.
 func (c *Client) Put(p string, r io.Reader) error {
-	req, err := c.req("PUT", p, r)
+	req, err := c.req(http.MethodPut, p, r)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *Client) poke(m, p string) error {
 // GetCode gets a response from a route and returns the
 // status code.
 func (c *Client) GetCode(p string) (int, error) {
-	req, err := c.req("GET", p, nil)
+	req, err := c.req(http.MethodGet, p, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -149,12 +149,12 @@ func (c *Client) GetCode(p string) (int, error) {
 
 // Poke posts a signal to the given route on the server.
 func (c *Client) Poke(p string) error {
-	return c.poke("POST", p)
+	return c.poke(http.MethodPost, p)
 }
 
 // Get gets a response from a route on the server.
 func (c *Client) Get(p string) (*http.Response, error) {
-	req, err := c.req("GET", p, nil)
+	req, err := c.req(http.MethodGet, p, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func (c *Client) Post(p string, r io.Reader, w io.Writer) error {
 	if r != nil {
 		r = ioutil.NopCloser(r)
 	}
-	req, err := c.req("POST", p, r)
+	req, err := c.req(http.MethodPost, p, r)
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (c *Client) jsonPost(p string, req interface{}) (*http.Response, error) {
 		return nil, err
 	}
 
-	httpReq, err := c.reqJSON("POST", p, bytes.NewBuffer(bs))
+	httpReq, err := c.reqJSON(http.MethodPost, p, bytes.NewBuffer(bs))
 	if err != nil {
 		return nil, err
 	}
@@ -285,5 +285,5 @@ func (c *Client) Call(p string, req, resp interface{}) error {
 
 // Delete sends a delete message to the particular path.
 func (c *Client) Delete(p string) error {
-	return c.poke("DELETE", p)
+	return c.poke(http.MethodDelete, p)
 }
