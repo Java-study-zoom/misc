@@ -1,7 +1,10 @@
 package jsonx
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
+	"os"
 	"sort"
 	"strconv"
 
@@ -54,7 +57,7 @@ func (p *printer) writeArray(array []interface{}) {
 		io.WriteString(p.p, "[]")
 		return
 	}
-	io.WriteString(p.p, "[")
+	io.WriteString(p.p, "[\n")
 	p.writeArrayItems(array)
 	io.WriteString(p.p, "]")
 }
@@ -117,9 +120,40 @@ func (p *printer) writeObject(obj map[string]interface{}) {
 		return
 	}
 
-	io.WriteString(p.p, "{")
+	io.WriteString(p.p, "{\n")
 	p.writeObjectItems(obj)
 	io.WriteString(p.p, "}")
 }
 
 func (p *printer) err() error { return p.p.Err() }
+
+// Fprint formats v in JSONX and prints it into w.
+func Fprint(w io.Writer, v interface{}) error {
+	bs, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	var g interface{}
+	if err := json.Unmarshal(bs, &g); err != nil {
+		return err
+	}
+
+	p := newPrinter(w)
+	p.write(g)
+	return p.err()
+}
+
+// Print formats v in JSONX and prints it into stdout.
+func Print(v interface{}) error {
+	return Fprint(os.Stdout, v)
+}
+
+// Format formats v in JSONX.
+func Format(v interface{}) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := Fprint(buf, v); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
