@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 )
 
-func TestFormat_cycle(t *testing.T) {
+func TestMarshal_loopback(t *testing.T) {
 	for _, obj := range []interface{}{
 		"something",
 		1.234,
@@ -25,7 +25,7 @@ func TestFormat_cycle(t *testing.T) {
 			t.Fatalf("marshal %v: %v", obj, err)
 		}
 
-		x, err := Format(obj)
+		x, err := Marshal(obj)
 		if err != nil {
 			t.Errorf("format %v: %v", obj, err)
 			continue

@@ -149,8 +149,8 @@ func Print(v interface{}) error {
 	return Fprint(os.Stdout, v)
 }
 
-// Format formats v in JSONX.
-func Format(v interface{}) ([]byte, error) {
+// Marshal formats v in JSONX.
+func Marshal(v interface{}) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := Fprint(buf, v); err != nil {
 		return nil, err
