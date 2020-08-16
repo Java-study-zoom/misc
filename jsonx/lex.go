@@ -56,7 +56,7 @@ func lexJSONX(x *lexing.Lexer) *lexing.Token {
 	return x.MakeToken(lexing.Illegal)
 }
 
-var keywords = lexing.KeywordSet("true", "false")
+var keywords = lexing.KeywordSet("true", "false", "null")
 
 func tokener(f string, r io.Reader) lexing.Tokener {
 	x := lexing.MakeLexer(f, r, lexJSONX)
