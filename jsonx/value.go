@@ -6,6 +6,10 @@ import (
 
 type value interface{}
 
+type null struct {
+	token *lexing.Token
+}
+
 type basic struct {
 	lead  *lexing.Token
 	token *lexing.Token

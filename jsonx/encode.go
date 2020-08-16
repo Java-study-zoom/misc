@@ -112,6 +112,10 @@ func encodeIdentList(w io.Writer, v *identList) error {
 
 func encodeValue(w io.Writer, v value) error {
 	switch v := v.(type) {
+	case *null:
+		if err := writeString(w, "null"); err != nil {
+			return err
+		}
 	case *basic:
 		if err := encodeBasic(w, v); err != nil {
 			return err

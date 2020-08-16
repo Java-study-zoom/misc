@@ -105,6 +105,9 @@ func parseValue(p *parser) value {
 		if kw.Lit == "true" || kw.Lit == "false" {
 			return &boolean{keyword: kw}
 		}
+		if kw.Lit == "null" {
+			return &null{token: kw}
+		}
 		p.CodeErrorf(
 			kw.Pos, "jsonx.unexpectedKeyword",
 			"unexpected keyword '%s'", kw.Lit,
