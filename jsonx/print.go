@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -156,4 +157,13 @@ func Marshal(v interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// WriteFile writes a JSONX object into a file.
+func WriteFile(p string, v interface{}) error {
+	bs, err := Marshal(v)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(p, bs, 0644)
 }
