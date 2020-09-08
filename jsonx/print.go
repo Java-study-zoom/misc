@@ -142,7 +142,11 @@ func Fprint(w io.Writer, v interface{}) error {
 
 	p := newPrinter(w)
 	p.write(g)
-	return p.err()
+	if err := p.err(); err != nil {
+		return err
+	}
+	_, err = io.WriteString(w, "\n")
+	return err
 }
 
 // Print formats v in JSONX and prints it into stdout.
