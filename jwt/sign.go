@@ -13,8 +13,8 @@ type Signer interface {
 	Sign(h *Header, data []byte) ([]byte, error)
 }
 
-// SignAndEncode signs and encodes a claim set and signs it.
-func SignAndEncode(c *ClaimSet, s Signer) (string, error) {
+// EncodeAndSign signs and encodes a claim set and signs it.
+func EncodeAndSign(c *ClaimSet, s Signer) (string, error) {
 	h := s.Header()
 	hb, err := h.encode()
 	if err != nil {

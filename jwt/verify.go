@@ -42,9 +42,15 @@ func DecodeAndVerify(token string, v Verifier) (*Token, error) {
 		return nil, errcode.Annotate(err, "verify signature")
 	}
 
+	claims, err := decodeClaimSet(c)
+	if err != nil {
+		return nil, errcode.InvalidArgf("decode claims: %s", err)
+	}
+
 	// TODO(h8liu): Decode claim set.
 	return &Token{
 		Header:    header,
+		ClaimSet:  claims,
 		Signature: sigBytes,
 	}, nil
 }

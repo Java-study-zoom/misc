@@ -46,7 +46,12 @@ func (c *ClaimSet) encode() (string, error) {
 	return encodeSegment(m)
 }
 
-func decodeClaimSet(bs []byte) (*ClaimSet, error) {
+func decodeClaimSet(s string) (*ClaimSet, error) {
+	bs, err := decodeSegmentBytes(s)
+	if err != nil {
+		return nil, err
+	}
+
 	c := new(ClaimSet)
 	if err := json.Unmarshal(bs, c); err != nil {
 		return nil, err
