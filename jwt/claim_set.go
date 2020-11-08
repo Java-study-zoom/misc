@@ -1,17 +1,21 @@
 package jwt
 
+import (
+	"encoding/json"
+)
+
 // ClaimSet contains the JWT claims
 type ClaimSet struct {
-	Iss   string // Issuer.
-	Scope string // Scope, space-delimited list.
-	Aud   string // Audiance. Intended target.
-	Exp   int64  // Expiration time (Unix timestamp seconds)
-	Iat   int64  // Asserstion time (Unix timestamp seconds)
-	Typ   string // Token type.
+	Iss   string `json:"iss"`   // Issuer.
+	Scope string `json:"scope"` // Scope, space-delimited list.
+	Aud   string `json:"aud"`   // Audiance. Intended target.
+	Exp   int64  `json:"exp"`   // Expiration time (Unix timestamp seconds)
+	Iat   int64  `json:"iat"`   // Asserstion time (Unix timestamp seconds)
+	Typ   string `json:"typ"`   // Token type.
 
-	Sub string
+	Sub string `json:"sub"`
 
-	Extra map[string]interface{}
+	Extra map[string]interface{} `json:"-"`
 }
 
 func (c *ClaimSet) encode() (string, error) {
@@ -40,4 +44,25 @@ func (c *ClaimSet) encode() (string, error) {
 	}
 
 	return encodeSegment(m)
+}
+
+func decodeClaimSet(bs []byte) (*ClaimSet, error) {
+	c := new(ClaimSet)
+	if err := json.Unmarshal(bs, c); err != nil {
+		return nil, err
+	}
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(bs, &m); err != nil {
+		return nil, err
+	}
+
+	for _, k := range []string{
+		"iss", "scope", "aud", "typ", "sub", "iss", "iat",
+	} {
+		delete(m, k)
+	}
+	if len(m) > 0 {
+		c.Extra = m
+	}
+	return c, nil
 }
