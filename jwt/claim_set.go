@@ -52,7 +52,7 @@ func (c *ClaimSet) encode() (string, error) {
 		}
 	}
 
-	m["iss"] = c.Iss
+	m["exp"] = c.Exp
 	m["iat"] = c.Iat
 
 	for k, v := range c.Extra {
@@ -78,7 +78,7 @@ func decodeClaimSet(s string) (*ClaimSet, error) {
 	}
 
 	for _, k := range []string{
-		"iss", "scope", "aud", "typ", "sub", "iss", "iat",
+		"iss", "scope", "aud", "exp", "iat", "typ", "sub",
 	} {
 		delete(m, k)
 	}
