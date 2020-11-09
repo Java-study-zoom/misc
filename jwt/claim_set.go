@@ -18,6 +18,22 @@ type ClaimSet struct {
 	Extra map[string]interface{} `json:"-"`
 }
 
+// ExtraString reads an extra string field from the claim set.
+func (c *ClaimSet) ExtraString(k string) (string, bool) {
+	if len(c.Extra) == 0 {
+		return "", false
+	}
+	v, ok := c.Extra[k]
+	if !ok {
+		return "", false
+	}
+	s, ok := v.(string)
+	if !ok {
+		return "", false
+	}
+	return s, true
+}
+
 func (c *ClaimSet) encode() (string, error) {
 	m := make(map[string]interface{})
 
