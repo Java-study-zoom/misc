@@ -36,7 +36,20 @@ func HexBytes(n int) string {
 	return hex.EncodeToString(Bytes(n))
 }
 
-// Letters returns a random ID of n random letters.
+// LowerLetters returns a random ID of n random letters, lower-case only.
+func LowerLetters(n int) string {
+	r := New()
+	var ret bytes.Buffer
+
+	for i := 0; i < n; i++ {
+		x := r.Int31n(26)
+		ret.WriteRune('a' + x)
+	}
+	return ret.String()
+}
+
+// Letters returns a random ID of n random case-sensitive letters.
+// They might have lower case or upper case.
 func Letters(n int) string {
 	r := New()
 	var ret bytes.Buffer
