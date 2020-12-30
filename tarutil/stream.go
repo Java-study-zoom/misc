@@ -101,7 +101,7 @@ func (s *Stream) AddBytes(name string, mode int64, bs []byte) {
 
 // AddFile adds a file of name and mode into the stream,
 // which content is read from file f.
-func (s *Stream) addFile(name string, mode int64, f string) {
+func (s *Stream) AddFile(name string, mode int64, f string) {
 	s.files = append(s.files, &streamFile{
 		name: name,
 		mode: mode,
