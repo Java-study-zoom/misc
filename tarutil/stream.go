@@ -71,18 +71,6 @@ type Stream struct {
 // NewStream create a new tar stream.
 func NewStream() *Stream { return &Stream{} }
 
-// NewDockerTarStream creates a stream with a docker file.
-func NewDockerTarStream(dockerfile string) *Stream {
-	ts := NewStream()
-	ts.AddDockerfile(dockerfile)
-	return ts
-}
-
-// AddDockerfile adds a DockerFile of content with mode 0600.
-func (s *Stream) AddDockerfile(content string) {
-	s.AddString("Dockerfile", 0600, content)
-}
-
 // AddString adds a file of name and mode into the stream,
 // which content is str.
 func (s *Stream) AddString(name string, mode int64, str string) {
@@ -123,7 +111,7 @@ type countingWriter struct {
 }
 
 func (w *countingWriter) Write(bs []byte) (int, error) {
-	n, err := w.Write(bs)
+	n, err := w.w.Write(bs)
 	w.n += int64(n)
 	return n, err
 }
