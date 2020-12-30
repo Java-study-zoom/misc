@@ -14,8 +14,19 @@ type streamFile struct {
 	file    string // File to read from file system.
 	zip     bool   // If to read the file as a zip file.
 	content []byte // Raw content; used only when File is empty string.
-	mode    int64  // File mode; used only when File is empty string.
+
+	meta Meta
 }
+
+// Meta contains metadata of file
+type Meta struct {
+	Mode    int64
+	UserID  int
+	GroupID int
+}
+
+// ModeMeta creates a Meta with specific mode.
+func ModeMeta(mode int64) *Meta { return &Meta{Mode: mode} }
 
 func (f *streamFile) writeTo(tw *tar.Writer) error {
 	if f.zip {
@@ -34,7 +45,7 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 			return err
 		}
 
-		mode := f.mode
+		mode := f.meta.Mode
 		if mode == 0 {
 			mode = int64(stat.Mode()) & 0777
 		}
@@ -43,6 +54,8 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 			Name: f.name,
 			Size: stat.Size(),
 			Mode: mode,
+			Gid:  f.meta.GroupID,
+			Uid:  f.meta.UserID,
 		}); err != nil {
 			return err
 		}
@@ -54,7 +67,9 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 	if err := tw.WriteHeader(&tar.Header{
 		Name: f.name,
 		Size: int64(len(f.content)),
-		Mode: f.mode,
+		Mode: f.meta.Mode,
+		Gid:  f.meta.GroupID,
+		Uid:  f.meta.UserID,
 	}); err != nil {
 		return err
 	}
@@ -71,29 +86,28 @@ type Stream struct {
 // NewStream create a new tar stream.
 func NewStream() *Stream { return &Stream{} }
 
-// AddString adds a file of name and mode into the stream,
+// AddString adds a file of name into the stream,
 // which content is str.
-func (s *Stream) AddString(name string, mode int64, str string) {
-	s.AddBytes(name, mode, []byte(str))
+func (s *Stream) AddString(name string, m *Meta, str string) {
+	s.AddBytes(name, m, []byte(str))
 }
 
-// AddBytes adds a file of name and mode into the stream,
-// which content is bs.
-func (s *Stream) AddBytes(name string, mode int64, bs []byte) {
+// AddBytes adds a file of name into the stream, which content is bs.
+func (s *Stream) AddBytes(name string, m *Meta, bs []byte) {
 	s.files = append(s.files, &streamFile{
 		name:    name,
-		mode:    mode,
 		content: bs,
+		meta:    *m,
 	})
 }
 
 // AddFile adds a file of name and mode into the stream,
 // which content is read from file f.
-func (s *Stream) AddFile(name string, mode int64, f string) {
+func (s *Stream) AddFile(name string, m *Meta, f string) {
 	s.files = append(s.files, &streamFile{
 		name: name,
-		mode: mode,
 		file: f,
+		meta: *m,
 	})
 }
 
