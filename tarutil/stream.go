@@ -59,7 +59,6 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 		}); err != nil {
 			return err
 		}
-
 		_, err = io.Copy(tw, file)
 		return err
 	}
@@ -73,8 +72,12 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 	}); err != nil {
 		return err
 	}
-	_, err := tw.Write(f.content)
-	return err
+	if len(f.content) > 0 {
+		if _, err := tw.Write(f.content); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Stream is a tar stream of files (or zip files). Files are transfered in
