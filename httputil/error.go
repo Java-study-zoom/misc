@@ -4,13 +4,34 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"shanhu.io/misc/errcode"
 )
 
 func isSuccess(resp *http.Response) bool {
 	return resp.StatusCode/100 == 2
+}
+
+type httpError struct {
+	StatusCode int
+	Status     string
+	Body       string
+}
+
+func (err *httpError) Error() string {
+	if err.Body != "" {
+		return fmt.Sprintf("%s - %s", err.Status, err.Body)
+	}
+	return err.Status
+}
+
+// ErrorStatusCode returns the status code is it is an HTTP error.
+func ErrorStatusCode(err error) int {
+	herr, ok := err.(*httpError)
+	if !ok {
+		return 0
+	}
+	return herr.StatusCode
 }
 
 // AddErrCode adds error code to an error given the http status.
@@ -32,9 +53,10 @@ func RespError(resp *http.Response) error {
 	if err != nil {
 		return err
 	}
-	err = fmt.Errorf("%s - %s",
-		resp.Status, strings.TrimSpace(string(bs)),
-	)
-
-	return AddErrCode(resp.StatusCode, err)
+	herr := &httpError{
+		StatusCode: resp.StatusCode,
+		Status:     resp.Status,
+		Body:       string(bs),
+	}
+	return AddErrCode(resp.StatusCode, herr)
 }
