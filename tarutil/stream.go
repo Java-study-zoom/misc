@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"io"
 	"os"
+	"time"
 
 	"shanhu.io/misc/errcode"
 )
@@ -16,6 +17,8 @@ type streamFile struct {
 	content []byte // Raw content; used only when File is empty string.
 
 	meta Meta
+
+	modTime time.Time
 }
 
 // Meta contains metadata of file
@@ -51,11 +54,12 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 		}
 
 		if err := tw.WriteHeader(&tar.Header{
-			Name: f.name,
-			Size: stat.Size(),
-			Mode: mode,
-			Gid:  f.meta.GroupID,
-			Uid:  f.meta.UserID,
+			Name:    f.name,
+			Size:    stat.Size(),
+			Mode:    mode,
+			Gid:     f.meta.GroupID,
+			Uid:     f.meta.UserID,
+			ModTime: f.modTime,
 		}); err != nil {
 			return err
 		}
@@ -64,11 +68,12 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 	}
 
 	if err := tw.WriteHeader(&tar.Header{
-		Name: f.name,
-		Size: int64(len(f.content)),
-		Mode: f.meta.Mode,
-		Gid:  f.meta.GroupID,
-		Uid:  f.meta.UserID,
+		Name:    f.name,
+		Size:    int64(len(f.content)),
+		Mode:    f.meta.Mode,
+		Gid:     f.meta.GroupID,
+		Uid:     f.meta.UserID,
+		ModTime: f.modTime,
 	}); err != nil {
 		return err
 	}
@@ -83,11 +88,12 @@ func (f *streamFile) writeTo(tw *tar.Writer) error {
 // Stream is a tar stream of files (or zip files). Files are transfered in
 // the order of adding.
 type Stream struct {
-	files []*streamFile
+	files   []*streamFile
+	modTime time.Time
 }
 
 // NewStream create a new tar stream.
-func NewStream() *Stream { return &Stream{} }
+func NewStream() *Stream { return &Stream{modTime: time.Now()} }
 
 // AddString adds a file of name into the stream,
 // which content is str.
@@ -101,6 +107,7 @@ func (s *Stream) AddBytes(name string, m *Meta, bs []byte) {
 		name:    name,
 		content: bs,
 		meta:    *m,
+		modTime: s.modTime,
 	})
 }
 
@@ -108,9 +115,10 @@ func (s *Stream) AddBytes(name string, m *Meta, bs []byte) {
 // which content is read from file f.
 func (s *Stream) AddFile(name string, m *Meta, f string) {
 	s.files = append(s.files, &streamFile{
-		name: name,
-		file: f,
-		meta: *m,
+		name:    name,
+		file:    f,
+		meta:    *m,
+		modTime: s.modTime,
 	})
 }
 
