@@ -154,6 +154,15 @@ func Print(v interface{}) error {
 	return Fprint(os.Stdout, v)
 }
 
+// Sprint formats v in JSONX and returns the formatted string.
+func Sprint(v interface{}) (string, error) {
+	buf := new(bytes.Buffer)
+	if err := Fprint(buf, v); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
 // Marshal formats v in JSONX.
 func Marshal(v interface{}) ([]byte, error) {
 	buf := new(bytes.Buffer)
