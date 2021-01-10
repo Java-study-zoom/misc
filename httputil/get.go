@@ -7,7 +7,7 @@ import (
 )
 
 func respString(resp *http.Response) (string, error) {
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("status code: %d", resp.StatusCode)
 	}
 	bs, err := ioutil.ReadAll(resp.Body)
