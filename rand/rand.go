@@ -65,6 +65,17 @@ func Letters(n int) string {
 	return ret.String()
 }
 
+// Digits returns a string of n random digits.
+func Digits(n int) string {
+	r := New()
+	var ret bytes.Buffer
+	for i := 0; i < 10; i++ {
+		x := r.Int31n(10)
+		ret.WriteRune('0' + x)
+	}
+	return ret.String()
+}
+
 // New returns a new math/rand.Rand that is seeded with crypto rand.
 func New() *mrand.Rand {
 	seed := int64(binary.LittleEndian.Uint64(Bytes(8)))

@@ -34,3 +34,19 @@ func TestLetters(t *testing.T) {
 		t.Errorf("not so random: %q == %q", s1, s2)
 	}
 }
+
+func TestDigits(t *testing.T) {
+	s1 := Digits(10)
+	s2 := Digits(10)
+	if s1 == s2 {
+		t.Errorf("not so random: %q == %q", s1, s2)
+	}
+
+	for _, s := range []string{s1, s2} {
+		for _, r := range s {
+			if !(r >= '0' && r <= '9') {
+				t.Errorf("digits string %q contains %q", s, r)
+			}
+		}
+	}
+}
