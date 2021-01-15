@@ -36,10 +36,10 @@ func Make(h *Header, body []byte) []byte {
 	printHeader(b, "From", h.From)
 	printHeader(b, "To", h.To)
 	if h.Cc != "" {
-		printHeader(b, "Cc", h.Cc)
+		printHeader(b, "CC", h.Cc)
 	}
 	if h.Bcc != "" {
-		printHeader(b, "Bcc", h.Bcc)
+		printHeader(b, "BCC", h.Bcc)
 	}
 	printHeader(b, "Subject", h.Subject)
 	printHeader(b, "MIME-Version", "1.0;")
