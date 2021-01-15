@@ -19,6 +19,8 @@ func Address(name, email string) string {
 type Header struct {
 	From    string
 	To      string
+	Cc     string
+	Bcc     string
 	Subject string
 	Time    time.Time
 }
@@ -33,6 +35,12 @@ func Make(h *Header, body []byte) []byte {
 	printHeader(b, "Date", h.Time.String())
 	printHeader(b, "From", h.From)
 	printHeader(b, "To", h.To)
+	if h.Cc != "" {
+		printHeader(b, "Cc", h.Cc)
+	}
+	if h.BCc != "" {
+		printHeader(b, "Bcc", h.Bcc)
+	}
 	printHeader(b, "Subject", h.Subject)
 	printHeader(b, "MIME-Version", "1.0;")
 	printHeader(b, "Content-Type", `text/html; charset="UTF-8"`)
