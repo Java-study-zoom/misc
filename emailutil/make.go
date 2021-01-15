@@ -19,7 +19,7 @@ func Address(name, email string) string {
 type Header struct {
 	From    string
 	To      string
-	Cc     string
+	Cc      string
 	Bcc     string
 	Subject string
 	Time    time.Time
@@ -38,7 +38,7 @@ func Make(h *Header, body []byte) []byte {
 	if h.Cc != "" {
 		printHeader(b, "Cc", h.Cc)
 	}
-	if h.BCc != "" {
+	if h.Bcc != "" {
 		printHeader(b, "Bcc", h.Bcc)
 	}
 	printHeader(b, "Subject", h.Subject)
