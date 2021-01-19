@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"shanhu.io/misc/errcode"
 )
@@ -56,7 +57,7 @@ func RespError(resp *http.Response) error {
 	herr := &httpError{
 		StatusCode: resp.StatusCode,
 		Status:     resp.Status,
-		Body:       string(bs),
+		Body:       strings.TrimSpace(string(bs)),
 	}
 	return AddErrCode(resp.StatusCode, herr)
 }
