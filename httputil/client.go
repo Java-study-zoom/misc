@@ -195,7 +195,11 @@ func (c *Client) GetBytes(p string) ([]byte, error) {
 // JSONGet gets the content of a path and decodes the response
 // into resp as JSON.
 func (c *Client) JSONGet(p string, resp interface{}) error {
-	httpResp, err := c.Get(p)
+	req, err := c.reqJSON(http.MethodGet, p, nil)
+	if err != nil {
+		return nil
+	}
+	httpResp, err := c.do(req)
 	if err != nil {
 		return err
 	}
